@@ -28,7 +28,7 @@ export const brandConfig = {
 
   /** 저작권 정보 */
   copyright: {
-    holder: 'InTalk Partners',
+    holder: '인톡파트너스',
     startYear: new Date().getFullYear(),
   },
 } as const

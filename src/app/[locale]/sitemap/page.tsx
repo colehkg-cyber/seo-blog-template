@@ -82,7 +82,6 @@ export default async function SitemapPage({
     { href: '/posts', title: lang === 'ko' ? '모든 글' : 'All Posts' },
     { href: '/archive', title: lang === 'ko' ? '아카이브' : 'Archive' },
     { href: '/about', title: lang === 'ko' ? '소개' : 'About' },
-    { href: '/recommendations', title: lang === 'ko' ? '추천' : 'Recommendations' },
   ]
 
   return (

@@ -417,7 +417,6 @@ export default async function HomePage({
               <ul className="space-y-2">
                 <li><Link href={`/${locale}/about`} className="text-gray-600 hover:text-gray-900">About</Link></li>
                 <li><Link href={`/${locale}/archive`} className="text-gray-600 hover:text-gray-900">Archive</Link></li>
-                <li><Link href={`/${locale}/recommendations`} className="text-gray-600 hover:text-gray-900">Recommendations</Link></li>
               </ul>
             </div>
             <div>
@@ -427,10 +426,7 @@ export default async function HomePage({
             </div>
           </div>
           <div className="border-t border-gray-200 pt-8 text-center text-sm text-gray-500">
-            <p>&copy; {new Date().getFullYear()} {brandConfig.copyright.holder} &bull;
-              <Link href={`/${locale}/privacy`} className="hover:text-gray-900 underline underline-offset-2"> Privacy</Link> •
-              <Link href={`/${locale}/terms`} className="hover:text-gray-900 underline underline-offset-2"> Terms</Link>
-            </p>
+            <p>&copy; {new Date().getFullYear()} {brandConfig.copyright.holder}</p>
           </div>
         </div>
       </footer>
