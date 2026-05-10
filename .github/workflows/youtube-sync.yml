@@ -17,7 +17,7 @@ jobs:
           echo "🚀 Calling YouTube sync API..."
 
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            https://colemearchy.com/api/cron/youtube-sync \
+            https://blog.intalkpartners.com/api/cron/youtube-sync \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
 

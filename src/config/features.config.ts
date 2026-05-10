@@ -6,7 +6,7 @@
  */
 export const featuresConfig = {
   /** 댓글 시스템 */
-  comments: true,
+  comments: false,
 
   /** Google AdSense 광고 */
   adsense: false,

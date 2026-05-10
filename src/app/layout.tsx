@@ -80,7 +80,10 @@ export const metadata: Metadata = {
     languages: Object.fromEntries(
       siteConfig.locales.map(locale => [locale, `/${locale}`])
     ),
-  }
+  },
+  verification: {
+    google: siteConfig.verification.google || undefined,
+  },
 };
 
 export default function RootLayout({

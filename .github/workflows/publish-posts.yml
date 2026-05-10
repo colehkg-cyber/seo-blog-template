@@ -17,7 +17,7 @@ jobs:
           echo "🚀 Calling publish posts API..."
 
           RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
-            https://colemearchy.com/api/publish-posts \
+            https://blog.intalkpartners.com/api/publish-posts \
             -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
             -H "Content-Type: application/json")
 

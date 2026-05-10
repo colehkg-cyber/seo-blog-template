@@ -1,10 +1,11 @@
 name: Daily Content Generation
 
 on:
-  schedule:
-    # Run at 00:00 KST (15:00 UTC) every day
-    - cron: '0 15 * * *'
-  workflow_dispatch: # Allow manual trigger
+  # schedule disabled: scripts/daily-content-generator.js no longer exists
+  # Replaced by daily-posts.yml (generate-daily-posts.ts)
+  # schedule:
+  #   - cron: '0 15 * * *'
+  workflow_dispatch: # Allow manual trigger only
 
 env:
   DATABASE_URL: ${{ secrets.DATABASE_URL }}

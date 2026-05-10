@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import { siteConfig, brandConfig, navigationConfig } from '@/config'
 
 interface PageLayoutProps {
@@ -9,16 +10,20 @@ interface PageLayoutProps {
 
 export default function PageLayout({ locale, currentPath, children }: PageLayoutProps) {
   const lang = locale === 'en' ? 'en' : 'ko'
-  
+
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
       <header className="border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-8">
-            <Link href={`/${locale}`} className="text-3xl font-serif italic">
-              {brandConfig.logo.text}
-            </Link>
+            <a href={brandConfig.logo.url || `/${locale}`} className="flex items-center">
+              {brandConfig.logo.image ? (
+                <Image src={brandConfig.logo.image} alt={brandConfig.logo.text} width={160} height={23} priority />
+              ) : (
+                <span className="text-3xl font-serif italic">{brandConfig.logo.text}</span>
+              )}
+            </a>
             <div className="flex gap-2">
               <Link
                 href={`/ko${currentPath}`}

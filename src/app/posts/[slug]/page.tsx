@@ -11,7 +11,6 @@ import RelatedPosts from '@/components/RelatedPosts'
 import TableOfContents from '@/components/TableOfContents'
 import Breadcrumb from '@/components/Breadcrumb'
 import YouTubeEmbed from '@/components/YouTubeEmbed'
-import CommentSection from '@/components/comments/CommentSection'
 import { calculateReadingTime, formatReadingTime } from '@/lib/reading-time'
 import ViewCounter from '@/components/ViewCounter'
 import { tagsToArray } from '@/lib/utils/tags'
@@ -185,30 +184,6 @@ export default async function PostPage({
   const readingTime = calculateReadingTime(content)
   const youtubeVideoId = extractYouTubeVideoId(post.youtubeVideoId || '')
   
-  // Fetch comments separately
-  const comments = await prisma.comment.findMany({
-    where: {
-      postId: post.id,
-      isApproved: true,
-      isDeleted: false,
-      parentId: null,
-    },
-    orderBy: {
-      createdAt: 'desc',
-    },
-    include: {
-      replies: {
-        where: {
-          isApproved: true,
-          isDeleted: false,
-        },
-        orderBy: {
-          createdAt: 'asc',
-        },
-      },
-    },
-  })
-
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -282,9 +257,13 @@ export default async function PostPage({
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-6">
-              <Link href="/" className="text-3xl font-bold text-gray-900">
-                {brandConfig.logo.text}
-              </Link>
+              <a href={brandConfig.logo.url || '/'} className="flex items-center">
+                {brandConfig.logo.image ? (
+                  <img src={brandConfig.logo.image} alt={brandConfig.logo.text} className="h-6 w-auto" />
+                ) : (
+                  <span className="text-3xl font-bold text-gray-900">{brandConfig.logo.text}</span>
+                )}
+              </a>
               <nav className="flex items-center gap-4">
                 <div className="flex gap-2">
                   <Link
@@ -387,8 +366,6 @@ export default async function PostPage({
           )}
 
               <MarkdownContent content={content} />
-              
-              <CommentSection postSlug={post.slug} />
               
               <RelatedPosts postId={post.id} />
 

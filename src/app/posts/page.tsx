@@ -61,9 +61,13 @@ export default async function PostsPage() {
         <header className="bg-white shadow-sm">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex justify-between items-center py-6">
-              <Link href="/" className="text-3xl font-bold text-gray-900">
-                {brandConfig.logo.text}
-              </Link>
+              <a href={brandConfig.logo.url || '/'} className="flex items-center">
+                {brandConfig.logo.image ? (
+                  <img src={brandConfig.logo.image} alt={brandConfig.logo.text} className="h-6 w-auto" />
+                ) : (
+                  <span className="text-3xl font-bold text-gray-900">{brandConfig.logo.text}</span>
+                )}
+              </a>
               <nav>
                 <Link href="/about" className="text-gray-600 hover:text-gray-900 ml-6">About</Link>
                 <Link href="/contact" className="text-gray-600 hover:text-gray-900 ml-6">Contact</Link>

@@ -149,11 +149,13 @@ export default async function HomePage({
       <header className="border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-8">
-            <Link href="/" className="flex items-center gap-3">
-              <h1 className="text-2xl font-bold text-gray-900">
-                {brandConfig.logo.text}
-              </h1>
-            </Link>
+            <a href={brandConfig.logo.url || '/'} className="flex items-center gap-3">
+              {brandConfig.logo.image ? (
+                <img src={brandConfig.logo.image} alt={brandConfig.logo.text} className="h-6 w-auto" />
+              ) : (
+                <h1 className="text-2xl font-bold text-gray-900">{brandConfig.logo.text}</h1>
+              )}
+            </a>
             <div className="flex gap-2 flex-shrink-0">
               <Link
                 href="/ko"
@@ -405,7 +407,11 @@ export default async function HomePage({
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 w-full overflow-x-hidden">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
             <div>
-              <h3 className="font-semibold text-gray-900 mb-4">{brandConfig.logo.text}</h3>
+              <h3 className="font-semibold text-gray-900 mb-4">
+                {brandConfig.logo.image ? (
+                  <img src={brandConfig.logo.image} alt={brandConfig.logo.text} className="h-5 w-auto" />
+                ) : brandConfig.logo.text}
+              </h3>
             </div>
             <div>
               <ul className="space-y-2">

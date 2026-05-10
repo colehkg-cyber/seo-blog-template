@@ -28,7 +28,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Run Shorts regeneration
-        run: pnpm tsx scripts/regenerate-shorts-daily.mjs
+        run: node scripts/regenerate-shorts-daily.mjs
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}

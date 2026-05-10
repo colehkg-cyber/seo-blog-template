@@ -6,14 +6,13 @@ import { extractYouTubeVideoId } from '@/lib/youtube-thumbnail'
 import YouTubeThumbnail from '@/components/YouTubeThumbnail'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
-import { getPostBySlug, getPostComments } from '@/lib/optimized-queries'
+import { getPostBySlug } from '@/lib/optimized-queries'
 import LazyBlogPostAnalytics from '@/components/LazyBlogPostAnalytics'
 import MarkdownContent from '@/components/MarkdownContent'
 import RelatedPosts from '@/components/RelatedPosts'
 import TableOfContents from '@/components/TableOfContents'
 import Breadcrumb from '@/components/Breadcrumb'
 import YouTubeEmbed from '@/components/YouTubeEmbed'
-import LazyCommentSection from '@/components/LazyCommentSection'
 import { calculateReadingTime, formatReadingTime } from '@/lib/reading-time'
 import ViewCounter from '@/components/ViewCounter'
 import { siteConfig, brandConfig, navigationConfig, featuresConfig } from '@/config'
@@ -234,9 +233,6 @@ export default async function PostPage({
   const readingTime = calculateReadingTime(content)
   const youtubeVideoId = extractYouTubeVideoId(post.youtubeVideoId || '')
   
-  // Fetch comments separately (no caching for dynamic data)
-  const comments = await getPostComments(post.id)
-
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
@@ -310,9 +306,13 @@ export default async function PostPage({
         <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" role="banner">
           <div className="border-b border-gray-100">
             <div className="flex justify-between items-center py-8">
-              <Link href={`/${locale}`} className="text-3xl font-serif italic">
-                {brandConfig.logo.text}
-              </Link>
+              <a href={brandConfig.logo.url || `/${locale}`} className="flex items-center">
+                {brandConfig.logo.image ? (
+                  <img src={brandConfig.logo.image} alt={brandConfig.logo.text} className="h-6 w-auto" />
+                ) : (
+                  <span className="text-3xl font-serif italic">{brandConfig.logo.text}</span>
+                )}
+              </a>
             </div>
             {/* Navigation */}
             <nav className="flex justify-center items-center gap-6 pb-4" aria-label="Main navigation">
@@ -443,10 +443,6 @@ export default async function PostPage({
 
               <MarkdownContent content={content} />
 
-              <Suspense fallback={<div className="h-20 animate-pulse bg-gray-100 rounded mt-8" />}>
-                <LazyCommentSection postSlug={post.slug} locale={locale} />
-              </Suspense>
-              
               <Suspense fallback={<div className="h-32 animate-pulse bg-gray-100 rounded mt-8" />}>
                 <RelatedPosts postId={post.id} />
               </Suspense>
