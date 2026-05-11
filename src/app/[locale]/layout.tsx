@@ -15,29 +15,19 @@ export async function generateMetadata({
   const { locale } = await params
   
   return {
-    title: locale === 'en' ? siteConfig.title.en : siteConfig.title.ko,
-    description: locale === 'en'
-      ? siteConfig.description.en
-      : siteConfig.description.ko,
-    icons: {
-      icon: '/icon',
-      apple: '/apple-icon',
-    },
+    title: siteConfig.title.ko,
+    description: siteConfig.description.ko,
     openGraph: {
-      title: locale === 'en' ? siteConfig.title.en : siteConfig.title.ko,
-      description: locale === 'en'
-        ? siteConfig.description.en
-        : siteConfig.description.ko,
+      title: siteConfig.title.ko,
+      description: siteConfig.description.ko,
       siteName: siteConfig.shortName,
-      locale: locale === 'en' ? 'en_US' : 'ko_KR',
+      locale: 'ko_KR',
       type: 'website',
     },
     twitter: {
       card: 'summary_large_image',
-      title: locale === 'en' ? siteConfig.title.en : siteConfig.title.ko,
-      description: locale === 'en'
-        ? siteConfig.description.en
-        : siteConfig.description.ko,
+      title: siteConfig.title.ko,
+      description: siteConfig.description.ko,
     },
   }
 }

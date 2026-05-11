@@ -1,9 +1,34 @@
+import { Metadata } from 'next'
 import PageLayout from '@/components/PageLayout'
 import ArchiveClient from '@/components/ArchiveClient'
 import { prisma } from '@/lib/prisma'
+import { siteConfig } from '@/config'
 
 // Temporarily disable static generation to avoid DB quota issues during build
 export const dynamic = 'force-dynamic'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const isKorean = locale === 'ko'
+
+  return {
+    title: isKorean ? `아카이브 | ${siteConfig.shortName}` : `Archive | ${siteConfig.shortName}`,
+    description: isKorean
+      ? 'AI, 기술, 소프트웨어 개발에 관한 모든 글'
+      : 'Browse all posts about AI, technology, and software development',
+    openGraph: {
+      title: isKorean ? `아카이브 | ${siteConfig.shortName}` : `Archive | ${siteConfig.shortName}`,
+      description: isKorean
+        ? 'AI, 기술, 소프트웨어 개발에 관한 모든 글'
+        : 'Browse all posts about AI, technology, and software development',
+      type: 'website',
+    },
+  }
+}
 
 export default async function ArchivePage({
   params,
@@ -12,27 +37,15 @@ export default async function ArchivePage({
 }) {
   try {
     const { locale } = await params
-    const lang = locale === 'en' ? 'en' : 'ko'
 
-    // 언어별 포스트 가져오기 (manual + YouTube 모두)
     const posts = await prisma.post.findMany({
       where: {
         status: 'PUBLISHED',
-        publishedAt: { not: null },
-        // 썸네일이 있는 포스트만 노출
-        coverImage: {
-          not: null
+        publishedAt: {
+          not: null,
+          lte: new Date(),
         },
-        OR: [
-          { originalLanguage: lang },
-          {
-            translations: {
-              some: {
-                locale: lang
-              }
-            }
-          }
-        ]
+        originalLanguage: 'ko',
       },
       orderBy: { publishedAt: 'desc' },
       select: {
@@ -41,41 +54,25 @@ export default async function ArchivePage({
         title: true,
         excerpt: true,
         publishedAt: true,
-        youtubeVideoId: true,
-        originalLanguage: true,
-        translations: {
-          where: {
-            locale: lang
-          },
-          select: {
-            title: true,
-            excerpt: true
-          }
-        }
       }
     })
 
-    // Serialize data for client component
     const serializedPosts = posts.map(post => ({
       id: post.id,
       slug: post.slug,
       title: post.title,
       excerpt: post.excerpt,
       publishedAt: post.publishedAt?.toISOString() || null,
-      youtubeVideoId: post.youtubeVideoId,
-      originalLanguage: post.originalLanguage,
-      translations: post.translations
     }))
 
     return (
       <PageLayout locale={locale} currentPath="/archive">
-        <ArchiveClient posts={serializedPosts} locale={locale} lang={lang} />
+        <ArchiveClient posts={serializedPosts} locale={locale} />
       </PageLayout>
     )
   } catch (error) {
     console.error('Error loading archive page:', error)
 
-    // Emergency fallback during DB quota or connection issues
     if (error instanceof Error && (
       error.message.includes('quota') ||
       error.message.includes('connection') ||
@@ -87,19 +84,17 @@ export default async function ArchivePage({
           <div className="text-center">
             <h1 className="text-2xl font-bold text-gray-900 mb-4">Service Temporarily Unavailable</h1>
             <p className="text-gray-600 mb-4">We're experiencing high traffic. Please try again in a few minutes.</p>
-            <a href="/" className="text-blue-600 hover:text-blue-800">← Return to Home</a>
+            <a href="/" className="text-blue-600 hover:text-blue-800">&larr; Return to Home</a>
           </div>
         </div>
       )
     }
 
-    // For other errors, show empty archive
     const { locale } = await params
-    const lang = locale === 'en' ? 'en' : 'ko'
 
     return (
       <PageLayout locale={locale} currentPath="/archive">
-        <ArchiveClient posts={[]} locale={locale} lang={lang} />
+        <ArchiveClient posts={[]} locale={locale} />
       </PageLayout>
     )
   }

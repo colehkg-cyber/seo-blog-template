@@ -79,7 +79,6 @@ export default async function SitemapPage({
 
   const mainPages = [
     { href: '/', title: lang === 'ko' ? '홈' : 'Home' },
-    { href: '/posts', title: lang === 'ko' ? '모든 글' : 'All Posts' },
     { href: '/archive', title: lang === 'ko' ? '아카이브' : 'Archive' },
     { href: '/about', title: lang === 'ko' ? '소개' : 'About' },
   ]

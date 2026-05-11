@@ -8,6 +8,7 @@ import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
 import LazyImage from './LazyImage'
 import type { Components } from 'react-markdown'
+import { unwrapContent } from '@/lib/utils/content'
 
 const CodeBlock = dynamic(() => import('./CodeBlock'), {
   loading: () => <code style={{ display: 'block', padding: '1rem', backgroundColor: '#1f2937', color: '#f3f4f6', borderRadius: '0.5rem', fontSize: '0.875rem', overflow: 'auto' }}>Loading...</code>,
@@ -24,7 +25,9 @@ function childrenToString(children: React.ReactNode): string {
   return ''
 }
 
-export default function MarkdownContent({ content }: MarkdownContentProps) {
+export default function MarkdownContent({ content: rawContent }: MarkdownContentProps) {
+  // Final defense: unwrap JSON-wrapped content before rendering
+  const content = unwrapContent(rawContent)
   const createHeadingId = (text: React.ReactNode) => {
     const textString = childrenToString(text)
     // Use only text content for ID to ensure consistency between server and client
@@ -34,7 +37,7 @@ export default function MarkdownContent({ content }: MarkdownContentProps) {
   return (
     <div style={{ maxWidth: '65ch', margin: '0 auto' }}>
       <ReactMarkdown 
-        remarkPlugins={[remarkGfm]}
+        remarkPlugins={[[remarkGfm, { singleTilde: false }]]}
         rehypePlugins={[rehypeRaw]}
         components={{
           h1: ({children}) => {

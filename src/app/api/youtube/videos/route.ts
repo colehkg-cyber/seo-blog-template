@@ -2,33 +2,30 @@ export const dynamic = "force-dynamic"
 import { NextResponse } from 'next/server';
 import { getChannelVideos } from '@/lib/youtube';
 import { prisma } from '@/lib/prisma';
+import { getSettingValue } from '@/lib/settings';
 
 export async function GET(request: Request) {
   try {
-    // API 키 확인 및 디버깅 로그
+    const apiKey = await getSettingValue('YOUTUBE_API_KEY')
+    const channelId = await getSettingValue('YOUTUBE_CHANNEL_ID')
+
     console.log('YouTube API Debug:', {
-      hasApiKey: !!process.env.YOUTUBE_API_KEY,
-      apiKeyLength: process.env.YOUTUBE_API_KEY?.length || 0,
-      hasChannelId: !!process.env.YOUTUBE_CHANNEL_ID,
-      channelId: process.env.YOUTUBE_CHANNEL_ID || 'NOT_SET',
+      hasApiKey: !!apiKey,
+      apiKeyLength: apiKey?.length || 0,
+      hasChannelId: !!channelId,
+      channelId: channelId || 'NOT_SET',
       nodeEnv: process.env.NODE_ENV,
       timestamp: new Date().toISOString()
     });
 
-    if (!process.env.YOUTUBE_API_KEY || !process.env.YOUTUBE_CHANNEL_ID) {
+    if (!apiKey || !channelId) {
       return NextResponse.json(
-        { 
+        {
           error: 'YouTube API not configured',
-          message: 'Please set YOUTUBE_API_KEY and YOUTUBE_CHANNEL_ID in Vercel Dashboard',
-          instructions: {
-            step1: 'Go to https://vercel.com and select your project',
-            step2: 'Navigate to Settings → Environment Variables',
-            step3: 'Add YOUTUBE_API_KEY and YOUTUBE_CHANNEL_ID',
-            step4: 'Redeploy the project',
-          },
+          message: 'Please configure YOUTUBE_API_KEY and YOUTUBE_CHANNEL_ID in Admin Settings or Vercel Dashboard',
           debug: {
-            apiKeyMissing: !process.env.YOUTUBE_API_KEY,
-            channelIdMissing: !process.env.YOUTUBE_CHANNEL_ID,
+            apiKeyMissing: !apiKey,
+            channelIdMissing: !channelId,
             environment: process.env.NODE_ENV || 'unknown'
           }
         },
@@ -89,10 +86,8 @@ export async function GET(request: Request) {
       type: error?.constructor?.name || 'UnknownError',
       // Google API 에러의 경우 추가 정보
       ...(error?.response?.data && { apiError: error.response.data }),
-      // 환경변수 상태 확인 (프로덕션에서도 디버깅을 위해 임시로 표시)
       env: {
-        hasApiKey: !!process.env.YOUTUBE_API_KEY,
-        hasChannelId: !!process.env.YOUTUBE_CHANNEL_ID
+        note: 'Check admin settings or environment variables'
       }
     };
     

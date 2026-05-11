@@ -3,12 +3,13 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { google } from 'googleapis'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-
-const youtube = google.youtube('v3')
+import { getSettingValue } from '@/lib/settings'
 
 // YouTube 영상 정보로 AI 콘텐츠 생성
 async function generateAIContent(video: any) {
-  const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!)
+  const geminiKey = await getSettingValue('GEMINI_API_KEY')
+  if (!geminiKey) throw new Error('GEMINI_API_KEY not configured')
+  const genAI = new GoogleGenerativeAI(geminiKey)
   const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' })
   
   const prompt = `
@@ -164,31 +165,32 @@ export async function GET(request: NextRequest) {
   try {
     // Cron job 인증 확인
     const authHeader = request.headers.get('authorization')
-    const cronSecret = process.env.CRON_SECRET
-    
+    const cronSecret = await getSettingValue('CRON_SECRET')
+
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-    
+
     // API 키 확인
-    const apiKey = process.env.YOUTUBE_API_KEY
-    const channelId = process.env.YOUTUBE_CHANNEL_ID
-    const geminiKey = process.env.GEMINI_API_KEY
-    
+    const apiKey = await getSettingValue('YOUTUBE_API_KEY')
+    const channelId = await getSettingValue('YOUTUBE_CHANNEL_ID')
+    const geminiKey = await getSettingValue('GEMINI_API_KEY')
+
     if (!apiKey || !channelId) {
-      return NextResponse.json({ 
-        error: 'YouTube API key or channel ID not configured' 
+      return NextResponse.json({
+        error: 'YouTube API key or channel ID not configured'
       }, { status: 500 })
     }
-    
+
     if (!geminiKey) {
       console.warn('Gemini API key not configured, will use basic content')
     }
-    
+
     // 최근 24시간 내의 영상 가져오기
     const yesterday = new Date()
     yesterday.setDate(yesterday.getDate() - 1)
-    
+
+    const youtube = google.youtube('v3')
     const response = await youtube.search.list({
       key: apiKey,
       channelId: channelId,
@@ -237,9 +239,10 @@ export async function GET(request: NextRequest) {
     
     // Vercel 재배포 트리거 (새 포스트가 있을 때만)
     const successCount = results.filter(r => r.status === 'success').length
-    if (successCount > 0 && process.env.REDEPLOY_WEBHOOK_URL) {
+    const redeployUrl = await getSettingValue('REDEPLOY_WEBHOOK_URL')
+    if (successCount > 0 && redeployUrl) {
       try {
-        await fetch(process.env.REDEPLOY_WEBHOOK_URL, { method: 'POST' })
+        await fetch(redeployUrl, { method: 'POST' })
         console.log('Triggered Vercel redeploy')
       } catch (error) {
         console.error('Failed to trigger redeploy:', error)

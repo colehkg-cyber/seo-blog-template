@@ -8,13 +8,5 @@ export const navigationConfig = {
   ko: [
     { href: '/', label: '홈' },
     { href: '/archive', label: '아카이브' },
-    // 필요에 따라 추가:
-    // { href: '/about', label: '소개' },
-  ],
-  en: [
-    { href: '/', label: 'Home' },
-    { href: '/archive', label: 'Archive' },
-    // Add as needed:
-    // { href: '/about', label: 'About' },
   ],
 } as const satisfies Record<string, ReadonlyArray<{ href: string; label: string }>>

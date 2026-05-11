@@ -7,8 +7,7 @@ const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY! });
 
 // Environment variables for configuration
 const DRY_RUN = process.env.DRY_RUN === 'true';
-const POSTS_PER_DAY = parseInt(process.env.POSTS_PER_DAY || '5'); // Reduced from 10 to 5 to avoid Vercel timeout
-const HOURS_BETWEEN_POSTS = parseInt(process.env.HOURS_BETWEEN_POSTS || '2');
+const POSTS_PER_DAY = parseInt(process.env.POSTS_PER_DAY || '1'); // 매 크론 실행마다 1개 생성 (매시간 크론 실행)
 
 // Embedding is not available with Claude API - RAG disabled
 async function generateEmbedding(_text: string): Promise<number[]> {
@@ -136,6 +135,86 @@ function getEnglishSearchQuery(category: string, prompt: string): string {
   return categoryDefaults[category] || 'insurance financial protection family';
 }
 
+// H2 섹션 사이에 Unsplash 인라인 이미지 삽입 (최대 2~3개)
+async function insertInlineImages(content: string, category: string, prompt: string): Promise<string> {
+  // H2 기준으로 섹션 분리
+  const sections = content.split(/(?=^## )/m);
+
+  // H2 섹션이 3개 미만이면 삽입하지 않음 (짧은 글)
+  const h2Sections = sections.filter(s => s.startsWith('## '));
+  if (h2Sections.length < 3) {
+    console.log('   ⏭️  H2 섹션이 3개 미만이라 인라인 이미지 삽입 건너뜀');
+    return content;
+  }
+
+  // 2번째, 4번째 H2 뒤에 이미지 삽입 (0-indexed로 index 1, 3)
+  const insertIndices = [1, 3].filter(i => i < h2Sections.length);
+  // 최대 3개로 제한 (5번째 H2가 있으면 추가)
+  if (h2Sections.length >= 6) {
+    insertIndices.push(5);
+  }
+
+  let h2Count = 0;
+  const resultSections: string[] = [];
+  let imagesInserted = 0;
+
+  for (const section of sections) {
+    if (section.startsWith('## ')) {
+      h2Count++;
+      if (insertIndices.includes(h2Count - 1) && imagesInserted < 3) {
+        // 섹션 제목에서 키워드 추출
+        const sectionTitle = section.split('\n')[0].replace(/^## /, '').trim();
+        const searchQuery = getEnglishSearchQuery(category, sectionTitle + ' ' + prompt);
+
+        // 커버 이미지와 다른 키워드로 검색하기 위해 섹션 제목 우선 사용
+        const sectionKeyword = getEnglishSearchQuery(category, sectionTitle);
+        const finalQuery = sectionKeyword !== getEnglishSearchQuery(category, prompt)
+          ? sectionKeyword
+          : searchQuery + ' background';
+
+        console.log(`   🖼️  인라인 이미지 검색 (H2 #${h2Count}): "${finalQuery}"`);
+
+        try {
+          const image = await searchUnsplashImage(finalQuery);
+          if (image) {
+            const imageUrl = getOptimizedImageUrl(image, 800, 75);
+            const alt = image.alt_description || image.description || sectionTitle;
+            const imageMarkdown = `\n\n![${alt}](${imageUrl})\n`;
+
+            // 첫 번째 문단 뒤에 이미지 삽입
+            const lines = section.split('\n');
+            const titleLine = lines[0];
+            const rest = lines.slice(1).join('\n');
+
+            // 첫 번째 빈 줄(문단 구분) 뒤에 삽입
+            const firstParaEnd = rest.indexOf('\n\n');
+            if (firstParaEnd !== -1) {
+              const beforeImage = rest.substring(0, firstParaEnd);
+              const afterImage = rest.substring(firstParaEnd);
+              resultSections.push(titleLine + '\n' + beforeImage + imageMarkdown + afterImage);
+            } else {
+              // 문단 구분이 없으면 섹션 끝에 삽입
+              resultSections.push(section + imageMarkdown);
+            }
+
+            imagesInserted++;
+            console.log(`   ✅ 인라인 이미지 #${imagesInserted} 삽입 (by ${image.user.name})`);
+            continue;
+          } else {
+            console.log(`   ⚠️ 인라인 이미지를 찾지 못했습니다 (H2 #${h2Count})`);
+          }
+        } catch (error) {
+          console.log(`   ⚠️ 인라인 이미지 검색 실패 (H2 #${h2Count}):`, error);
+        }
+      }
+    }
+    resultSections.push(section);
+  }
+
+  console.log(`   📸 총 ${imagesInserted}개 인라인 이미지 삽입 완료`);
+  return resultSections.join('');
+}
+
 // Generate slug from title
 function generateSlug(title: string): string {
   return title
@@ -208,6 +287,14 @@ async function generateBlogPost(topic: BlogTopic, index: number) {
       }
     }
 
+    // Step 5.7: 본문에 인라인 이미지 삽입 (H2 섹션 사이)
+    console.log('🖼️  인라인 이미지 삽입 중...');
+    parsedContent.content = await insertInlineImages(
+      parsedContent.content || responseText,
+      topic.category,
+      topic.prompt
+    );
+
     // Step 6: Save to database as draft (or just log if DRY_RUN)
     if (DRY_RUN) {
       console.log(`\n✅ [DRY RUN] Would create post:`);
@@ -264,9 +351,9 @@ async function generateBlogPost(topic: BlogTopic, index: number) {
 }
 
 async function main() {
-  console.log('📝 인톡 파트너스 일일 보험 블로그 포스트 자동 생성 시작...');
+  console.log('📝 인톡 파트너스 보험 블로그 포스트 자동 생성 시작...');
   console.log('👤 페르소나: 보험 전문 설계사');
-  console.log(`📅 ${HOURS_BETWEEN_POSTS}시간 간격으로 ${POSTS_PER_DAY}개 예약 발행`);
+  console.log(`📅 ${POSTS_PER_DAY}개 포스트 생성 (매시간 크론 실행)`);
   console.log('🇰🇷 한국어로 작성');
   if (DRY_RUN) {
     console.log('🧪 DRY RUN MODE: 실제로 DB에 저장하지 않습니다\n');

@@ -18,7 +18,7 @@ export default function Breadcrumb({ postTitle, postSlug }: BreadcrumbProps) {
           <span className="mx-2">/</span>
         </li>
         <li>
-          <Link href="/posts" className="hover:text-gray-700 transition-colors">
+          <Link href="/archive" className="hover:text-gray-700 transition-colors">
             Posts
           </Link>
         </li>

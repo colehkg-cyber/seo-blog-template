@@ -5,6 +5,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 import { generateAffiliateContentPrompt } from '@/lib/ai-prompts'
 import { injectAffiliateLinks } from '@/lib/utils/affiliate-link-injector'
 import { generateUniqueSlugWithTimestamp } from '@/lib/utils/slug'
+import { unwrapContent } from '@/lib/utils/content'
 
 let _turso: ReturnType<typeof createClient> | null = null
 function getTurso() {
@@ -123,6 +124,11 @@ export async function GET(request: NextRequest) {
         seoTitle: `${product.name} 후기`,
         seoDescription: responseText.substring(0, 160)
       }
+    }
+
+    // 4.5. Unwrap JSON-wrapped content before processing
+    if (parsedContent.content) {
+      parsedContent.content = unwrapContent(parsedContent.content)
     }
 
     // 5. 제휴 링크 삽입

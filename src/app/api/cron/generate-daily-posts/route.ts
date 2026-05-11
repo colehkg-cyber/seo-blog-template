@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('🤖 Daily blog post generation started...');
+    console.log('🤖 Hourly blog post generation started (1 post per run)...');
     const startTime = Date.now();
 
     // Import and execute the generation script
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const endTime = Date.now();
     const duration = ((endTime - startTime) / 1000).toFixed(2);
 
-    console.log(`✅ Daily blog post generation completed in ${duration}s`);
+    console.log(`✅ Hourly blog post generation completed in ${duration}s`);
 
     return NextResponse.json({
       success: true,
@@ -49,11 +49,11 @@ export async function POST(request: NextRequest) {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
-    console.error('❌ Error in daily post generation:', error);
+    console.error('❌ Error in hourly post generation:', error);
     return NextResponse.json(
       {
         success: false,
-        error: 'Failed to generate daily posts',
+        error: 'Failed to generate hourly post',
         details: error instanceof Error ? error.message : 'Unknown error'
       },
       { status: 500 }

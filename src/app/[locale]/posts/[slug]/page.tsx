@@ -19,6 +19,7 @@ import { siteConfig, brandConfig, navigationConfig, featuresConfig } from '@/con
 import { shouldUseNextImage } from '@/lib/image-utils'
 import { optimizeUnsplashUrl } from '@/lib/unsplash'
 import { tagsToArray } from '@/lib/utils/tags'
+import { unwrapContent } from '@/lib/utils/content'
 
 interface PostPageProps {
   params: Promise<{ slug: string; locale: string }>
@@ -92,33 +93,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     }
   }
 
-  // Parse content if it's in JSON format (used for metadata extraction only)
-  let content = post.content
-
-  // Check if content starts with ```json block
-  if (content.startsWith('```json')) {
-    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/)
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[1])
-        if (parsed.content) {
-          content = parsed.content
-        }
-      } catch (e) {
-        console.error('Failed to parse JSON block:', e)
-      }
-    }
-  } else {
-    // Try direct JSON parse
-    try {
-      const parsed = JSON.parse(post.content)
-      if (parsed.content) {
-        content = parsed.content
-      }
-    } catch (e) {
-      // Content is already in markdown format
-    }
-  }
+  const content = unwrapContent(post.content)
 
   const readingTime = calculateReadingTime(content)
   
@@ -196,38 +171,11 @@ export default async function PostPage({
   const displayContent = lang === 'en' && translation?.content ? translation.content : post.content
   const displayExcerpt = lang === 'en' && translation?.excerpt ? translation.excerpt : post.excerpt
   
-  // Parse content if it's in JSON format
-  let content = displayContent
-
-  // Remove YouTube boilerplate from existing posts
+  // Unwrap JSON-wrapped content and remove YouTube boilerplate
+  let content = unwrapContent(displayContent)
   content = content.replace(/\n*---\n+### Watch the Video\n+This post is based on our YouTube video\. Watch it for more details!\n+---\n+\*Originally published on YouTube:[^*]*\*/g, '')
   content = content.replace(/### Watch the Video[\s\S]*?Watch it for more details!/g, '')
   content = content.replace(/\*Originally published on YouTube:[^*]*\*/g, '')
-
-  // Check if content starts with ```json block
-  if (content.startsWith('```json')) {
-    const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/)
-    if (jsonMatch) {
-      try {
-        const parsed = JSON.parse(jsonMatch[1])
-        if (parsed.content) {
-          content = parsed.content
-        }
-      } catch (e) {
-        console.error('Failed to parse JSON block:', e)
-      }
-    }
-  } else {
-    // Try direct JSON parse
-    try {
-      const parsed = JSON.parse(post.content)
-      if (parsed.content) {
-        content = parsed.content
-      }
-    } catch (e) {
-      // Content is already in markdown format
-    }
-  }
   
   // Calculate reading time
   const readingTime = calculateReadingTime(content)
@@ -321,8 +269,8 @@ export default async function PostPage({
                   key={item.href}
                   href={`/${locale}${item.href === '/' ? '' : item.href}`}
                   className={`text-sm font-medium pb-2 ${
-                    item.href === '/posts' 
-                      ? 'text-gray-900 border-b-2 border-gray-900' 
+                    item.href === '/archive'
+                      ? 'text-gray-900 border-b-2 border-gray-900'
                       : 'text-gray-600 hover:text-gray-900'
                   }`}
                 >

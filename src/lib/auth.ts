@@ -23,9 +23,21 @@ export function verifyAdminAuth(request: NextRequest): boolean {
   // 1. Authorization header 체크
   const authHeader = request.headers.get('authorization');
   if (authHeader) {
-    const token = authHeader.replace('Bearer ', '');
-    if (token === adminPassword) {
-      return true;
+    // Bearer token
+    if (authHeader.startsWith('Bearer ')) {
+      const token = authHeader.slice(7);
+      if (token === adminPassword) {
+        return true;
+      }
+    }
+
+    // Basic Auth (브라우저 기본 인증)
+    if (authHeader.startsWith('Basic ')) {
+      const decoded = Buffer.from(authHeader.split(' ')[1], 'base64').toString();
+      const [, password] = decoded.split(':');
+      if (password === adminPassword) {
+        return true;
+      }
     }
   }
 

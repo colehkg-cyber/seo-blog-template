@@ -1,6 +1,5 @@
 import Link from 'next/link'
-import Image from 'next/image'
-import { siteConfig, brandConfig, navigationConfig } from '@/config'
+import { brandConfig, navigationConfig } from '@/config'
 
 interface PageLayoutProps {
   locale: string
@@ -9,8 +8,6 @@ interface PageLayoutProps {
 }
 
 export default function PageLayout({ locale, currentPath, children }: PageLayoutProps) {
-  const lang = locale === 'en' ? 'en' : 'ko'
-
   return (
     <div className="min-h-screen bg-white">
       {/* Header */}
@@ -19,29 +16,15 @@ export default function PageLayout({ locale, currentPath, children }: PageLayout
           <div className="flex justify-between items-center py-8">
             <a href={brandConfig.logo.url || `/${locale}`} className="flex items-center">
               {brandConfig.logo.image ? (
-                <Image src={brandConfig.logo.image} alt={brandConfig.logo.text} width={160} height={23} priority />
+                <img src={brandConfig.logo.image} alt={brandConfig.logo.text} className="h-6 w-auto" />
               ) : (
                 <span className="text-3xl font-serif italic">{brandConfig.logo.text}</span>
               )}
             </a>
-            <div className="flex gap-2">
-              <Link
-                href={`/ko${currentPath}`}
-                className={`px-3 py-1 rounded font-medium ${lang === 'ko' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-              >
-                KOR
-              </Link>
-              <Link
-                href={`/en${currentPath}`}
-                className={`px-3 py-1 rounded font-medium ${lang === 'en' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-              >
-                ENG
-              </Link>
-            </div>
           </div>
           {/* Navigation */}
           <nav className="flex justify-center items-center gap-6 pb-4" aria-label="Main navigation">
-            {(navigationConfig[lang as keyof typeof navigationConfig] ?? navigationConfig[siteConfig.defaultLocale]).map((item) => (
+            {(navigationConfig.ko).map((item) => (
               <Link
                 key={item.href}
                 href={`/${locale}${item.href === '/' ? '' : item.href}`}

@@ -77,46 +77,69 @@ export async function searchUnsplashImage(
 }
 
 /**
- * 블로그 포스트 제목에서 적절한 검색 키워드 추출 (보험 전문)
+ * 블로그 포스트 제목에서 적절한 검색 키워드 추출
  */
 export function extractImageKeywords(title: string): string {
-  const insuranceKeywords: Record<string, string> = {
-    '자동차': 'car insurance driving',
-    '생명': 'life insurance family',
-    '건강': 'health insurance medical',
-    '암보험': 'medical health care',
-    '실손': 'hospital medical care',
-    '화재': 'home insurance house',
-    '여행': 'travel insurance airport',
-    '치아': 'dental health care',
-    '연금': 'retirement planning senior',
-    '절세': 'tax planning finance',
-    '노후': 'retirement elderly senior',
-    '가족': 'family protection home',
-    '사고': 'accident safety protection',
-    '병원': 'hospital medical doctor',
-    '재테크': 'financial planning money',
-    '보험료': 'insurance cost money',
-    '보장': 'insurance protection shield',
-    '설계': 'financial planning meeting',
-    '청구': 'insurance claim document',
-    '트렌드': 'technology innovation digital',
-    '디지털': 'digital technology fintech',
-    '반려동물': 'pet dog cat animal',
-    '부부': 'couple family marriage',
-    '신혼': 'newlywed couple wedding',
-    '어린이': 'children family kids',
-    '은퇴': 'retirement senior peaceful',
+  const keywordMap: Record<string, string> = {
+    // AI & Tech
+    'AI': 'artificial intelligence technology',
+    '인공지능': 'artificial intelligence robot',
+    'ChatGPT': 'AI chatbot technology',
+    'GPT': 'AI language model',
+    'Claude': 'AI assistant technology',
+    'Gemini': 'AI technology digital',
+    'LLM': 'artificial intelligence neural network',
+    '머신러닝': 'machine learning data',
+    '딥러닝': 'deep learning neural network',
+    '프롬프트': 'AI prompt engineering',
+    '자동화': 'automation workflow digital',
+    '코딩': 'programming code laptop',
+    '개발': 'software development coding',
+    '노코드': 'no code technology startup',
+    // Startup & Business
+    '스타트업': 'startup office team',
+    '창업': 'entrepreneur startup business',
+    'PM': 'product management meeting',
+    '프로덕트': 'product design strategy',
+    'SEO': 'SEO marketing digital',
+    '마케팅': 'digital marketing analytics',
+    '성장': 'business growth chart',
+    '투자': 'investment finance money',
+    '수익': 'revenue business profit',
+    '사업': 'business strategy planning',
+    // Biohacking & Health
+    '바이오해킹': 'biohacking health wellness',
+    '다이어트': 'healthy diet food',
+    '건강': 'health wellness lifestyle',
+    '운동': 'fitness exercise gym',
+    '케토': 'keto diet healthy food',
+    '수면': 'sleep wellness rest',
+    '웨고비': 'weight loss health medical',
+    '멘탈': 'mental health mindfulness',
+    'ADHD': 'focus productivity brain',
+    // Lifestyle
+    '독서': 'reading books library',
+    '생산성': 'productivity desk workspace',
+    '루틴': 'morning routine lifestyle',
+    '자기계발': 'personal development growth',
+    '재테크': 'financial planning investment',
+    '부업': 'side hustle freelance',
+    // General Tech
+    '블로그': 'blogging writing laptop',
+    '유튜브': 'youtube content creator',
+    '콘텐츠': 'content creation digital',
+    '디자인': 'design creative workspace',
+    '앱': 'mobile app smartphone',
   }
 
-  for (const [keyword, search] of Object.entries(insuranceKeywords)) {
+  for (const [keyword, search] of Object.entries(keywordMap)) {
     if (title.includes(keyword)) {
       return search
     }
   }
 
-  // 기본값: 보험/금융 관련 이미지
-  return 'insurance financial protection'
+  // Default: technology & digital
+  return 'technology digital workspace minimal'
 }
 
 /**

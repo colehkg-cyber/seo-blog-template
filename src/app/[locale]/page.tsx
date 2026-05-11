@@ -4,7 +4,6 @@ import { prisma } from '@/lib/prisma'
 // import LazyNewsletterAnalytics from '@/components/LazyNewsletterAnalytics' // Disabled newsletter feature
 import { Metadata } from 'next'
 import { siteConfig, brandConfig, navigationConfig } from '@/config'
-import { LazyAdSense } from '@/components/LazyAdSense'
 import { shouldUseNextImage } from '@/lib/image-utils'
 import { tagsToArray } from '@/lib/utils/tags'
 
@@ -19,12 +18,12 @@ export async function generateMetadata({
   const { locale } = await params
 
   return {
-    title: siteConfig.title[locale as keyof typeof siteConfig.title] ?? siteConfig.title[siteConfig.defaultLocale],
-    description: siteConfig.description[locale as keyof typeof siteConfig.description] ?? siteConfig.description[siteConfig.defaultLocale],
+    title: siteConfig.title.ko,
+    description: siteConfig.description.ko,
     alternates: {
       canonical: `${siteConfig.url}/${locale}`,
       languages: {
-        ...Object.fromEntries(siteConfig.locales.map(l => [l, `/${l}`])),
+        ko: '/ko',
         'x-default': `/${siteConfig.defaultLocale}`,
       }
     },
@@ -36,16 +35,7 @@ export async function generateMetadata({
   }
 }
 
-interface Translation {
-  id: string
-  locale: string
-  title: string
-  excerpt: string | null
-}
-
-type Post = Awaited<ReturnType<typeof prisma.post.findMany>>[number] & {
-  translations?: Translation[]
-}
+type Post = Awaited<ReturnType<typeof prisma.post.findMany>>[number]
 
 function parseExcerpt(excerpt: string | null): string | null {
   if (!excerpt) return null;
@@ -89,49 +79,20 @@ export default async function HomePage({
   params: Promise<{ locale: string }>
 }) {
   const { locale } = await params
-  const lang = locale === 'en' ? 'en' : 'ko'
   let posts: Post[] = []
-  
+
   try {
     posts = await prisma.post.findMany({
       where: {
         status: 'PUBLISHED',
         publishedAt: {
           not: null,
-          lte: new Date() // Only show posts that should be published by now
+          lte: new Date()
         },
-        // 언어별 포스트 필터링: 정확한 언어 매칭
-        ...(lang === 'ko' ? {
-          // 한국어 페이지: originalLanguage가 'ko'인 경우만
-          originalLanguage: 'ko'
-        } : {
-          // 영어 페이지: originalLanguage가 'en'이거나 영어 번역이 있는 경우만
-          OR: [
-            { originalLanguage: 'en' },
-            {
-              AND: [
-                { originalLanguage: 'ko' },
-                {
-                  translations: {
-                    some: {
-                      locale: 'en'
-                    }
-                  }
-                }
-              ]
-            }
-          ]
-        })
+        originalLanguage: 'ko'
       },
       orderBy: { publishedAt: 'desc' },
-      take: 20, // 성능 최적화: 홈페이지 최대 20개 포스트만 로딩
-      include: {
-        translations: {
-          where: {
-            locale: lang
-          }
-        }
-      }
+      take: 20,
     })
   } catch (error) {
     console.error('Database error:', error)
@@ -156,24 +117,10 @@ export default async function HomePage({
                 <h1 className="text-2xl font-bold text-gray-900">{brandConfig.logo.text}</h1>
               )}
             </a>
-            <div className="flex gap-2 flex-shrink-0">
-              <Link
-                href="/ko"
-                className={`px-3 py-1 rounded font-medium whitespace-nowrap ${lang === 'ko' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-              >
-                KOR
-              </Link>
-              <Link
-                href="/en"
-                className={`px-3 py-1 rounded font-medium whitespace-nowrap ${lang === 'en' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'}`}
-              >
-                ENG
-              </Link>
-            </div>
           </div>
           {/* Navigation */}
           <nav className="flex justify-center items-center gap-6 pb-4" aria-label="Main navigation">
-            {(navigationConfig[lang as keyof typeof navigationConfig] ?? navigationConfig[siteConfig.defaultLocale]).map((item, index) => (
+            {(navigationConfig.ko).map((item, index) => (
               <Link
                 key={item.href}
                 href={`/${locale}${item.href === '/' ? '' : item.href}`}
@@ -225,15 +172,11 @@ export default async function HomePage({
                       )}
                       <div className="space-y-4">
                         <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 leading-tight hover:text-gray-700 transition-colors">
-                          {lang === 'en' && featuredPost.translations?.[0]?.title
-                            ? featuredPost.translations[0].title
-                            : featuredPost.title}
+                          {featuredPost.title}
                         </h2>
                         {featuredPost.excerpt && (
                           <p className="text-lg text-gray-600 leading-relaxed">
-                            {lang === 'en' && featuredPost.translations?.[0]?.excerpt
-                              ? parseExcerpt(featuredPost.translations[0].excerpt)
-                              : parseExcerpt(featuredPost.excerpt)}
+                            {parseExcerpt(featuredPost.excerpt)}
                           </p>
                         )}
                         <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -295,9 +238,7 @@ export default async function HomePage({
                           )}
                           <div>
                             <h3 className="font-semibold text-gray-900 leading-tight line-clamp-2 group-hover:text-gray-700 transition-colors">
-                              {lang === 'en' && post.translations?.[0]?.title
-                                ? post.translations[0].title
-                                : post.title}
+                              {post.title}
                             </h3>
                             <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
                               <time>
@@ -354,15 +295,11 @@ export default async function HomePage({
                           )}
                           <div className="md:col-span-2 space-y-2">
                             <h3 className="text-xl font-semibold text-gray-900 leading-tight group-hover:text-gray-700 transition-colors">
-                              {lang === 'en' && post.translations?.[0]?.title
-                                ? post.translations[0].title
-                                : post.title}
+                              {post.title}
                             </h3>
                             {post.excerpt && (
                               <p className="text-gray-600 line-clamp-2">
-                                {lang === 'en' && post.translations?.[0]?.excerpt
-                                  ? parseExcerpt(post.translations[0].excerpt)
-                                  : parseExcerpt(post.excerpt)}
+                                {parseExcerpt(post.excerpt)}
                               </p>
                             )}
                             <div className="flex items-center gap-2 text-sm text-gray-500">

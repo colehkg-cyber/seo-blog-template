@@ -8,7 +8,7 @@ import { MASTER_SYSTEM_PROMPT } from '@/lib/ai-prompts'
 import { getVideoMetadataForBlog } from '@/lib/youtube'
 import { YouTubeTranscriptService } from '@/lib/youtube-transcript'
 import { GoogleGenerativeAI } from '@google/generative-ai'
-import { env } from '@/lib/env'
+import { getSettingValue } from '@/lib/settings'
 import { logger, ApiError } from '@/lib/error-handler'
 import { generateSlug, generateUniqueSlug } from '@/lib/utils/slug'
 import { detectLanguage } from '@/lib/translation'
@@ -16,7 +16,16 @@ import { backupSinglePost } from '@/lib/auto-backup'
 import { findMatchingProducts } from '@/lib/utils/affiliate-product-matcher'
 import { injectAffiliateLinks } from '@/lib/utils/affiliate-link-injector'
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY)
+// Lazy-initialized Gemini client
+let _genAI: GoogleGenerativeAI | null = null
+
+async function getGenAI(): Promise<GoogleGenerativeAI> {
+  if (_genAI) return _genAI
+  const apiKey = await getSettingValue('GEMINI_API_KEY')
+  if (!apiKey) throw new ApiError(500, 'GEMINI_API_KEY not configured')
+  _genAI = new GoogleGenerativeAI(apiKey)
+  return _genAI
+}
 
 export interface ConvertVideoToBlogOptions {
   videoId: string
@@ -109,6 +118,7 @@ export async function convertVideoToBlog(
 
   // Generate blog content using Gemini
   logger.info('Generating blog content', { videoId, isShort })
+  const genAI = await getGenAI()
   const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
 
   // Process in chunks if needed
@@ -238,7 +248,7 @@ OUTPUT FORMAT:
 }
   `.trim()
 
-  const finalModel = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
+  const finalModel = (await getGenAI()).getGenerativeModel({ model: 'gemini-2.5-flash-lite' })
   const finalResult = await finalModel.generateContent(blogPrompt)
   const finalResponse = await finalResult.response
   const finalText = finalResponse.text()

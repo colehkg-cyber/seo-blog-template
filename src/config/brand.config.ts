@@ -11,7 +11,7 @@ export const brandConfig = {
     /** 텍스트 로고 (이미지가 없을 때 사용) */
     text: 'InTalk',
     /** 이미지 로고 경로 (public/ 기준). null이면 텍스트 로고 사용 */
-    image: '/intalk-logo.svg',
+    image: '/images/intalk-logo.svg',
     /** 로고 클릭 시 이동할 외부 URL. null이면 블로그 홈으로 이동 */
     url: 'https://www.intalkpartners.com/',
   },

@@ -1,0 +1,49 @@
+/**
+ * Content unwrap utility
+ *
+ * AI(Gemini) sometimes wraps markdown content in JSON format:
+ * - ```json { "content": "## Title\n..." } ```
+ * - { "content": "## Title\n..." }
+ *
+ * This utility extracts the pure markdown from such wrappers.
+ */
+
+/**
+ * Unwrap content that may be wrapped in JSON format.
+ * Returns pure markdown content.
+ */
+export function unwrapContent(content: string): string {
+  if (!content || typeof content !== 'string') return content
+
+  let text = content.trim()
+
+  // Case 1: Content starts with ```json block
+  if (text.startsWith('```json')) {
+    const jsonMatch = text.match(/```json\n([\s\S]*?)\n```/)
+    if (jsonMatch) {
+      try {
+        const parsed = JSON.parse(jsonMatch[1])
+        if (parsed.content && typeof parsed.content === 'string') {
+          return parsed.content
+        }
+      } catch {
+        // Failed to parse, fall through
+      }
+    }
+  }
+
+  // Case 2: Content starts with { — try direct JSON parse
+  if (text.startsWith('{')) {
+    try {
+      const parsed = JSON.parse(text)
+      if (parsed.content && typeof parsed.content === 'string') {
+        return parsed.content
+      }
+    } catch {
+      // Not valid JSON, return original
+    }
+  }
+
+  // Case 3: Already plain markdown
+  return content
+}

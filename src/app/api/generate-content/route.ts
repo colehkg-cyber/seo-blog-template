@@ -10,6 +10,7 @@ import { generateSlug, generateUniqueSlugWithTimestamp } from '@/lib/utils/slug'
 import { detectLanguage } from '@/lib/translation';
 import { autoGenerateThumbnailUrl } from '@/lib/utils/thumbnail';
 import { tagsToArray, tagsToString } from '@/lib/utils/tags'
+import { unwrapContent } from '@/lib/utils/content'
 import { checkGeminiRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
 import { verifyAdminAuth } from '@/lib/auth';
 
@@ -163,7 +164,7 @@ async function generateContentHandler(request: NextRequest) {
       data: {
         title: postTitle,
         slug,
-        content: parsedContent.content || responseText,
+        content: unwrapContent(parsedContent.content || responseText),
         excerpt: parsedContent.excerpt || responseText.substring(0, 160),
         tags: tagsToString(parsedContent.tags || []),
         seoTitle: parsedContent.seoTitle || parsedContent.title,

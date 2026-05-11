@@ -1,23 +1,19 @@
 // YouTube API 설정
-// 주의: 프로덕션에서는 반드시 환경 변수를 사용하세요!
+// DB 설정을 우선 조회하고, 없으면 환경 변수 fallback
 
-export function getYouTubeConfig() {
-  // Vercel에서 환경 변수가 설정되지 않은 경우를 위한 임시 설정
-  const config = {
-    apiKey: process.env.YOUTUBE_API_KEY || '',
-    channelId: process.env.YOUTUBE_CHANNEL_ID || '',
-  };
+import { getSettingValue } from './settings'
 
-  // 환경 변수가 없으면 경고 로그
-  if (!process.env.YOUTUBE_API_KEY) {
-    console.error('⚠️ YOUTUBE_API_KEY is not set in environment variables!');
-    console.error('Please set it in Vercel Dashboard: Settings → Environment Variables');
-  }
-  
-  if (!process.env.YOUTUBE_CHANNEL_ID) {
-    console.error('⚠️ YOUTUBE_CHANNEL_ID is not set in environment variables!');
-    console.error('Please set it in Vercel Dashboard: Settings → Environment Variables');
+export async function getYouTubeConfig() {
+  const apiKey = (await getSettingValue('YOUTUBE_API_KEY')) || ''
+  const channelId = (await getSettingValue('YOUTUBE_CHANNEL_ID')) || ''
+
+  if (!apiKey) {
+    console.error('YOUTUBE_API_KEY is not set in DB or environment variables!')
   }
 
-  return config;
+  if (!channelId) {
+    console.error('YOUTUBE_CHANNEL_ID is not set in DB or environment variables!')
+  }
+
+  return { apiKey, channelId }
 }

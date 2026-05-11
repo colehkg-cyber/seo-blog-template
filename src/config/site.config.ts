@@ -18,7 +18,7 @@ export const siteConfig = {
   defaultLocale: 'ko' as const,
 
   /** 지원 로케일 */
-  locales: ['ko', 'en'] as const,
+  locales: ['ko'] as const,
 
   /** 로케일별 사이트 제목 (홈페이지 title, OG title) */
   title: {

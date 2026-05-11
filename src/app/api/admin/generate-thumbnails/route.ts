@@ -1,13 +1,14 @@
 export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { searchUnsplashImage, extractImageKeywords, getOptimizedImageUrl } from '@/lib/unsplash';
 import { autoGenerateThumbnailUrl } from '@/lib/utils/thumbnail';
 import { verifyAdminAuth } from '@/lib/auth';
 
 /**
  * Batch generate thumbnails for posts without coverImage
  * GET: List posts without thumbnails
- * POST: Generate thumbnails for posts without coverImage
+ * POST: Generate thumbnails using Unsplash (with OG image fallback)
  */
 
 export async function GET(request: NextRequest) {
@@ -93,12 +94,23 @@ export async function POST(request: NextRequest) {
 
     // Generate thumbnails for each post
     for (const post of postsToUpdate) {
-      const thumbnailUrl = autoGenerateThumbnailUrl(post.title, request);
+      let coverImageUrl: string
+
+      // Try Unsplash first
+      const searchQuery = extractImageKeywords(post.title)
+      const unsplashImage = await searchUnsplashImage(searchQuery)
+
+      if (unsplashImage) {
+        coverImageUrl = getOptimizedImageUrl(unsplashImage, 1080, 75)
+      } else {
+        // Fallback to OG image
+        coverImageUrl = autoGenerateThumbnailUrl(post.title, request)
+      }
 
       // Update the post with the generated thumbnail URL
       const updatedPost = await prisma.post.update({
         where: { id: post.id },
-        data: { coverImage: thumbnailUrl },
+        data: { coverImage: coverImageUrl },
         select: {
           id: true,
           title: true,
@@ -107,7 +119,10 @@ export async function POST(request: NextRequest) {
         }
       });
 
-      updatedPosts.push(updatedPost);
+      updatedPosts.push({
+        ...updatedPost,
+        source: unsplashImage ? 'unsplash' : 'og-image'
+      });
     }
 
     return NextResponse.json({

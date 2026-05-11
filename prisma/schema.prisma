@@ -27,6 +27,7 @@ model Post {
   status            PostStatus                  @default(DRAFT)
   socialLinks       String?
   youtubeVideoId    String?
+  threadsPostId     String?
   originalLanguage  String                      @default("ko")
   globalRank        Int?
   comments          Comment[]
@@ -37,6 +38,7 @@ model Post {
   @@index([publishedAt])
   @@index([status, scheduledAt])
   @@index([globalRank])
+  @@index([threadsPostId])
 }
 
 model Admin {
@@ -101,6 +103,13 @@ model PostTranslation {
 enum PostStatus {
   DRAFT
   PUBLISHED
+}
+
+// 관리자 설정 (환경변수 대체)
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
 }
 
 // 쿠팡 파트너스 제휴 상품

@@ -42,8 +42,7 @@ export async function middleware(request: NextRequest) {
       '/api',
       '/admin',
       '/_next',
-      '/icon',
-      '/apple-icon',
+      '/apple-touch-icon.png',
       '/favicon.ico',
       '/robots.txt',
       '/sitemap.xml',
@@ -115,6 +114,6 @@ export async function middleware(request: NextRequest) {
 export const config = {
   matcher: [
     // Match all pathnames except static files and api routes
-    '/((?!api|_next/static|_next/image|favicon.ico|icon|apple-icon|robots.txt|sitemap.xml|ads.txt|fonts|images).*)',
+    '/((?!api|_next/static|_next/image|favicon.ico|favicon.svg|apple-touch-icon.png|robots.txt|sitemap.xml|ads.txt|fonts|images).*)',
   ]
 }

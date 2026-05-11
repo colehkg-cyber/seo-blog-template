@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import { getBestThumbnailFromApiResponse } from './youtube-thumbnail';
-import { env } from './env';
+import { getSettingValue } from './settings';
 import type {
   YouTubeChannelsResponse,
   YouTubePlaylistItemsResponse,
@@ -22,11 +22,12 @@ function parseDuration(duration: string): number {
   return hours * 3600 + minutes * 60 + seconds;
 }
 
-// YouTube API 클라이언트를 함수로 변경하여 런타임에 환경 변수 로드
-function getYouTubeClient() {
+// YouTube API 클라이언트를 async로 변경하여 DB 설정 지원
+async function getYouTubeClient() {
+  const apiKey = await getSettingValue('YOUTUBE_API_KEY');
   return google.youtube({
     version: 'v3',
-    auth: env.YOUTUBE_API_KEY,
+    auth: apiKey,
   });
 }
 
@@ -45,8 +46,12 @@ export interface YouTubeVideo {
 // 채널의 최신 동영상 가져오기
 export async function getChannelVideos(maxResults: number = 10, pageToken?: string): Promise<{ videos: YouTubeVideo[], nextPageToken?: string }> {
   try {
-    const channelId = env.YOUTUBE_CHANNEL_ID;
-    const apiKey = env.YOUTUBE_API_KEY;
+    const channelId = await getSettingValue('YOUTUBE_CHANNEL_ID');
+    const apiKey = await getSettingValue('YOUTUBE_API_KEY');
+
+    if (!apiKey || !channelId) {
+      throw new Error('YouTube API key or channel ID not configured');
+    }
 
     console.log('YouTube API Config:', {
       hasApiKey: !!apiKey,
@@ -56,7 +61,7 @@ export async function getChannelVideos(maxResults: number = 10, pageToken?: stri
       timestamp: new Date().toISOString()
     });
 
-    const youtube = getYouTubeClient();
+    const youtube = await getYouTubeClient();
 
     // 채널의 업로드 플레이리스트 ID 가져오기
     const channelResponse = await youtube.channels.list({
@@ -152,7 +157,7 @@ export async function getChannelVideos(maxResults: number = 10, pageToken?: stri
 // 특정 동영상의 상세 정보 가져오기
 export async function getVideoDetails(videoId: string): Promise<YouTubeVideo | null> {
   try {
-    const youtube = getYouTubeClient();
+    const youtube = await getYouTubeClient();
 
     const response = await youtube.videos.list({
       part: ['snippet', 'contentDetails'],
@@ -194,7 +199,7 @@ export async function getVideoMetadataForBlog(videoId: string): Promise<{
   thumbnailUrl: string;
 } | null> {
   try {
-    const youtube = getYouTubeClient();
+    const youtube = await getYouTubeClient();
 
     const response = await youtube.videos.list({
       part: ['snippet', 'contentDetails'],
