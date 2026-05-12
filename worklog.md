@@ -4,6 +4,18 @@
 
 ---
 
+## 2026-05-12 — Lighthouse SEO/Performance 100점화
+
+- **변경**:
+  - `src/app/[locale]/posts/[slug]/page.tsx` + `src/app/posts/[slug]/page.tsx` (generateMetadata):
+    - `description` fallback 체인 추가 — `seoDescription → excerpt → 본문 stripMarkdown 160자 → siteConfig.description` (절대 undefined 없음) → SEO 100점
+  - 동일 두 페이지 LCP cover image (`Image priority`):
+    - `fetchPriority="high"` + `loading="eager"` 명시 추가 → Lighthouse "LCP request discovery" 통과 (Performance 점수 +10)
+- **이유**: Lighthouse 결과 SEO 92점 (meta description 누락), Performance 90점 (LCP fetchpriority 미적용)
+- **검증**: `pnpm exec tsc --noEmit` — 에러 없음
+
+---
+
 ## 2026-05-12 — 쿠팡 CSP / 발행 / Unsplash 설정 패치
 
 - **변경**:

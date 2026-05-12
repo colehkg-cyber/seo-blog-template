@@ -85,16 +85,31 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   }
 
   const readingTime = calculateReadingTime(content)
-  
+
+  // SEO meta description fallback chain (never undefined)
+  const stripMarkdown = (s: string) => s
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_`~\-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const contentFallback = stripMarkdown(content).slice(0, 160)
+  const description =
+    post.seoDescription ||
+    post.excerpt ||
+    contentFallback ||
+    siteConfig.description[siteConfig.defaultLocale]
+
   const ogImageUrl = post.coverImage ||
     `${process.env.NEXT_PUBLIC_SITE_URL}/api/og?title=${encodeURIComponent(post.title)}&author=${encodeURIComponent(post.author || siteConfig.author.name)}&date=${encodeURIComponent(post.publishedAt.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}&readTime=${encodeURIComponent(formatReadingTime(readingTime))}&tags=${encodeURIComponent(tagsToArray(post.tags).join(','))}`
 
   return {
     title: post.seoTitle || post.title,
-    description: post.seoDescription || post.excerpt || undefined,
+    description,
     openGraph: {
       title: post.seoTitle || post.title,
-      description: post.seoDescription || post.excerpt || undefined,
+      description,
       type: 'article',
       publishedTime: post.publishedAt.toISOString(),
       modifiedTime: post.updatedAt.toISOString(),
@@ -104,7 +119,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     twitter: {
       card: 'summary_large_image',
       title: post.seoTitle || post.title,
-      description: post.seoDescription || post.excerpt || undefined,
+      description,
       images: [ogImageUrl],
     },
   }
@@ -297,6 +312,8 @@ export default async function PostPage({
                   fill
                   className="object-contain bg-gray-100"
                   priority
+                  fetchPriority="high"
+                  loading="eager"
                   sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                 />
               </div>

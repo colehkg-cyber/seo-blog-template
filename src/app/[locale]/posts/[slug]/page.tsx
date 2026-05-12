@@ -92,19 +92,34 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   const content = unwrapContent(post.content)
 
   const readingTime = calculateReadingTime(content)
-  
+
   // Use translated content if available
   const translation = post.translations?.[0]
   const displayTitle = locale === 'en' && translation?.title ? translation.title : post.title
   const displayExcerpt = locale === 'en' && translation?.excerpt ? translation.excerpt : post.excerpt
   const displayCoverImage = translation?.coverImage || post.coverImage
-  
+
+  // SEO meta description fallback chain (never undefined)
+  const stripMarkdown = (s: string) => s
+    .replace(/```[\s\S]*?```/g, ' ')
+    .replace(/!\[[^\]]*\]\([^)]*\)/g, ' ')
+    .replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+    .replace(/[#>*_`~\-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  const contentFallback = stripMarkdown(content).slice(0, 160)
+  const description =
+    post.seoDescription ||
+    displayExcerpt ||
+    contentFallback ||
+    siteConfig.description[locale === 'en' ? 'en' : 'ko']
+
   const ogImageUrl = displayCoverImage ||
     `${process.env.NEXT_PUBLIC_SITE_URL}/api/og?title=${encodeURIComponent(displayTitle)}&author=${encodeURIComponent(post.author || siteConfig.author.name)}&date=${encodeURIComponent(new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}&readTime=${encodeURIComponent(formatReadingTime(readingTime))}&tags=${encodeURIComponent(tagsToArray(post.tags).join(','))}`
 
   return {
     title: post.seoTitle || displayTitle,
-    description: post.seoDescription || displayExcerpt || undefined,
+    description,
     alternates: {
       canonical: `/posts/${post.slug}`,
       languages: {
@@ -114,7 +129,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     },
     openGraph: {
       title: post.seoTitle || displayTitle,
-      description: post.seoDescription || displayExcerpt || undefined,
+      description,
       type: 'article',
       publishedTime: new Date(post.publishedAt).toISOString(),
       modifiedTime: new Date(post.updatedAt).toISOString(),
@@ -125,7 +140,7 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     twitter: {
       card: 'summary_large_image',
       title: post.seoTitle || displayTitle,
-      description: post.seoDescription || displayExcerpt || undefined,
+      description,
       images: [ogImageUrl],
     },
   }
@@ -317,6 +332,8 @@ export default async function PostPage({
                     fill
                     className="object-cover bg-gray-100"
                     priority
+                    fetchPriority="high"
+                    loading="eager"
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
                   />
                 ) : (
@@ -325,6 +342,8 @@ export default async function PostPage({
                     alt={displayTitle}
                     className="absolute inset-0 w-full h-full object-cover bg-gray-100"
                     loading="eager"
+                    fetchPriority="high"
+                    decoding="async"
                   />
                 )}
               </div>
