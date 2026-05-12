@@ -4,9 +4,9 @@
 
 ---
 
-## 2026-05-12 — 화이트라벨 SEO 블로그 템플릿 초기화
+## 2026-05-12 — Coleitai Blog 초기화
 
-- **변경**: intalk-blog를 seo-blog-template으로 제네릭화
+- **변경**: intalk-blog 기반 코드를 Coleitai Blog로 분리
   - InTalk 전용 파일 30+개 삭제
   - site.config.ts, brand.config.ts 기본값으로 변경
   - Admin1 (설정 가이드 + 전문 지식 관리) / Admin2 (CMS) 분리

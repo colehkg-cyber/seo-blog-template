@@ -1,4 +1,4 @@
-# SEO Blog Template
+# Coleitai Blog
 
 **Lighthouse 400점, 무료 운영, 5단계 설정. 나만의 SEO 블로그를 만드세요.**
 
