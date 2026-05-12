@@ -1,7 +1,7 @@
 # 1강. 0에서 배포까지 — Claude Code 실습 가이드
 
 > **완성 템플릿**: https://github.com/colehkg-cyber/coleitai-blog
-> **소요 시간**: 약 40분
+> **소요 시간**: 약 70분
 > **결과물**: 완성된 블로그가 내 Vercel 주소에 배포된 상태
 
 ---
@@ -10,7 +10,7 @@
 
 | # | 단계 | 시간 | 하는 일 |
 |---|---|---|---|
-| PHASE 0 | 사전 준비 | 15분 | 계정 4개 만들기 |
+| PHASE 0 | 도구 이해 + 계정 만들기 | 35분 | 5개 서비스 가입 + 키 발급 |
 | PHASE 1 | 템플릿 복사 | 3분 | GitHub에서 내 계정으로 복사 |
 | PHASE 2 | VS Code 세팅 | 5분 | 코드 열고 Claude Code 실행 |
 | PHASE 3 | 블로그 커스텀 | 10분 | 이름·색상 내 것으로 변경 |
@@ -20,46 +20,139 @@
 
 ---
 
-## PHASE 0. 사전 준비 (15분)
+## PHASE 0. 도구 이해 + 계정 만들기 (35분)
 
-아래 4개 계정을 미리 만들어오세요. 강의 당일 이미 있어야 합니다.
+### 우리가 쓰는 5개 도구 — 한눈에
 
-| 서비스 | 가입 주소 | 비용 | 용도 |
+| 서비스 | 한 줄 정의 | 비용 | 이 강의에서 하는 일 |
 |---|---|---|---|
-| Claude | claude.ai | Pro $20/월 | Claude Code 실행 |
-| GitHub | github.com | 무료 | 코드 저장 |
-| Vercel | vercel.com | 무료 | 자동 배포 |
-| Turso | turso.tech | 무료 | 글 저장 DB |
-| Google AI Studio | aistudio.google.com | 무료 | AI 글쓰기 키 |
+| Claude | AI 어시스턴트 (코딩까지 됨) | Pro $20/월 | Claude Code로 코드 자동 작성 |
+| GitHub | 코드 저장소 (개발자 드롭박스) | 무료 | 내 블로그 코드를 안전하게 보관 |
+| Vercel | 웹사이트 자동 배포 서비스 | 무료 | GitHub에 push → 자동으로 인터넷 공개 |
+| Turso | 클라우드 SQLite DB | 무료 | 블로그 글·조회수 저장 |
+| Google AI Studio | Gemini API 발급처 | 무료 | AI가 블로그 글 써주는 키 |
 
-> ⚠️ Vercel은 반드시 GitHub 계정으로 연동해서 가입하세요.
+> 💡 **돈 드는 건 Claude Pro 단 하나.** 나머지 4개는 모두 무료 플랜으로 충분합니다. 블로그 트래픽이 월 수십만 PV 넘어가야 유료로 넘어갑니다.
 
-### Turso DB + 토큰 발급 방법
+---
 
-1. https://app.turso.tech → GitHub으로 로그인
-2. Databases → Create Database
-3. Name: `my-blog-db` / Region: Tokyo
-4. 생성된 DB 클릭 → Generate Token → Read & Write → Create
-5. 아래 2개를 메모장에 저장:
-   - Database URL: `libsql://my-blog-db-내아이디.turso.io`
-   - Auth Token: `eyJ...` 로 시작하는 긴 문자열
+### 도구별 자세한 설명 (왜 이걸 쓰는가)
 
-### Gemini API 키 발급
+#### 1. Claude — AI 코딩 파트너
 
-1. https://aistudio.google.com → Google 로그인
-2. Get API Key → Create API Key
-3. 발급된 키 메모장에 저장 (`AIzaSy...`)
+- **뭐 하는 곳?**: Anthropic이 만든 AI. ChatGPT의 경쟁자
+- **왜 Pro($20/월)가 필요?**: 우리는 채팅이 아니라 **Claude Code(CLI 도구)** 를 쓸 거예요. 터미널에서 `claude` 한 번 실행하면 AI가 내 컴퓨터 파일을 직접 읽고 수정합니다. 이게 Pro 구독 안에 포함됨
+- **무료 대안 없음?**: Claude.ai 무료는 채팅만 됨. 코드 자동 수정은 안 됨
+- **왜 Claude를 쓰나? ChatGPT 안 됨?**: Claude Code가 현재 가장 잘 만들어진 CLI 코딩 에이전트. Cursor·Copilot은 IDE 안에 갇혀 있지만 Claude Code는 터미널에서 직접 파일·git·배포까지 자동화
 
-### 메모장에 이 6개 모아두기
+#### 2. GitHub — 코드 저장소
+
+- **뭐 하는 곳?**: 코드 버전 관리 사이트. "이 파일을 언제 누가 어떻게 바꿨는지" 전부 기록됨
+- **왜 무료?**: Microsoft가 인수했고 개인·소규모는 무료가 정책. Public 저장소는 용량 무제한 무료
+- **이 강의에서 하는 역할**: ① 완성 템플릿을 내 계정으로 복사 ② 내가 코드 바꿀 때마다 백업 ③ Vercel이 여기서 코드를 가져가 배포
+- **알아둘 점**: Public(누구나 봄) vs Private(나만 봄). 우리는 Public으로 만들 거예요 (Vercel 무료 플랜은 Public 권장)
+
+#### 3. Vercel — 자동 배포 호스팅
+
+- **뭐 하는 곳?**: Next.js를 만든 회사. Next.js 사이트를 자동으로 인터넷에 띄워주는 서비스
+- **왜 무료?**: 개인용 Hobby 플랜은 무료. 월 100GB 대역폭 + 무제한 배포 + 자동 HTTPS 다 포함
+- **마법 같은 점**: GitHub에 코드 push만 하면 **20초 안에 자동 배포** 됨. 서버 세팅, 도메인, SSL 인증서 전부 자동
+- **유료로 넘어가야 할 때**: 월 트래픽 100GB 초과(아주 잘 되는 블로그 기준 월 50만 PV 수준) — 1강 단계에서는 신경 X
+
+#### 4. Turso — 클라우드 DB
+
+- **뭐 하는 곳?**: SQLite를 클라우드에서 돌려주는 회사. SQLite는 파일 하나로 동작하는 가장 가벼운 DB
+- **왜 무료?**: 무료 플랜이 9GB 저장 + 월 10억 read + 2500만 write. 개인 블로그는 평생 무료라고 보면 됨
+- **왜 MySQL/PostgreSQL 안 쓰나?**: 그건 서버를 따로 켜둬야 함(비싸고 복잡). Turso는 Vercel 같은 서버리스 환경과 궁합이 완벽
+- **이 강의에서 하는 역할**: 블로그 글, 조회수, 카테고리, 댓글 다 여기 저장
+
+#### 5. Google AI Studio (Gemini) — AI 글쓰기 키
+
+- **뭐 하는 곳?**: 구글의 AI 모델 Gemini의 API 키를 발급해주는 곳
+- **왜 무료?**: 구글이 OpenAI/Claude를 따라잡으려고 Gemini Flash를 무료로 풀어둠. 분당 15회 / 일 1500회까지 무료
+- **왜 OpenAI 안 쓰나?**: OpenAI는 결제카드 필수 + 유료. Gemini는 카드 없이 키만 받아서 바로 시작 가능
+- **이 강의에서 하는 역할**: 2강에서 "키워드만 입력하면 블로그 글 자동 작성" 기능에 사용
+
+---
+
+### 5개 계정 한 번에 만들기 — 순서대로 따라하세요
+
+> ⚠️ **순서가 중요합니다.** GitHub → Vercel/Turso → Claude → Google 순서로 만드세요. 뒤 3개는 GitHub 계정으로 로그인하면 가입이 빠릅니다.
+
+#### Step 1. GitHub 계정 (5분)
+
+1. https://github.com/signup 접속
+2. 이메일 입력 → 비밀번호 → Username 입력
+   - **Username 팁**: `j-kim-blog`처럼 깔끔하게. 이게 저장소 URL에 들어갑니다 (`github.com/j-kim-blog/my-blog`)
+3. 메일 인증 → 완료
+4. (선택) 무료 플랜 그대로 두기. 별도 결제 카드 등록 안 해도 됨
+
+#### Step 2. Vercel 계정 (3분)
+
+1. https://vercel.com/signup 접속
+2. **"Continue with GitHub"** 버튼 클릭 ← 반드시 이거로
+3. GitHub 로그인 → 권한 허용
+4. Hobby (무료) 플랜 선택
+5. 완료. 따로 비밀번호 만들 필요 없음 (GitHub으로 로그인)
+
+> 💡 GitHub 연동으로 가입해야 PHASE 5에서 저장소를 바로 import할 수 있습니다.
+
+#### Step 3. Turso 계정 + DB 생성 + 토큰 발급 (10분)
+
+1. https://app.turso.tech 접속
+2. **"Sign in with GitHub"** 클릭 → 권한 허용
+3. 첫 화면에서 **Create Database** 클릭
+4. 입력값:
+   - **Name**: `my-blog-db`
+   - **Group**: `default`
+   - **Region**: `nrt` (Tokyo, 가장 가까움)
+5. **Create Database** 클릭
+6. 생성된 DB 카드 클릭 → 상세 페이지로 이동
+7. **Database URL** 복사 → 메모장에 저장
+   - 모양: `libsql://my-blog-db-내아이디.turso.io`
+8. 같은 페이지에서 **"Generate Token"** 클릭
+9. **Expiration: Never** / **Permissions: Read & Write** 선택 → Create
+10. 나타나는 긴 토큰(`eyJ...`로 시작) 즉시 복사 → 메모장에 저장
+    - ⚠️ 이 토큰은 **한 번만 보여줍니다.** 놓치면 새로 발급해야 함
+
+#### Step 4. Google AI Studio (Gemini API Key) (5분)
+
+1. https://aistudio.google.com 접속
+2. 구글 계정으로 로그인 (기존 Gmail 계정 사용 가능)
+3. 좌측 메뉴에서 **"Get API Key"** 클릭
+4. **"Create API Key"** → "Create API key in new project" 선택
+5. 발급된 키 (`AIzaSy...`로 시작) 복사 → 메모장에 저장
+
+> 💡 카드 등록 안 해도 됩니다. 무료 플랜 자동 적용.
+
+#### Step 5. Claude Pro 구독 (5분, 유료 $20/월)
+
+1. https://claude.ai 접속 → Sign up
+2. 구글 또는 이메일로 가입
+3. 가입 후 좌측 하단 본인 이름 → **Settings → Plans & Billing**
+4. **"Upgrade to Pro"** 클릭 → 카드 결제
+5. 완료 후 한 번 로그아웃했다 다시 로그인 (Pro 활성화 확인)
+
+> 💡 이미 ChatGPT Plus 쓰고 있어도 Claude Pro는 별도. Claude Code 쓰려면 Pro 필수입니다.
+> 💡 첫 달만 써보고 환불도 가능 (가입 후 7일 내 환불 정책).
+
+---
+
+### 메모장 체크리스트 — 다음 단계로 가기 전 확인
+
+아래 6개가 메모장에 다 적혀 있는지 확인하세요. 하나라도 비면 멈추고 다시 발급하세요.
 
 ```
-GitHub 저장소 URL  : https://github.com/내아이디/my-blog
-Turso DB URL      : libsql://my-blog-db-내아이디.turso.io
-Turso Auth Token  : eyJ... (긴 문자열)
-Gemini API Key    : AIzaSy...
-관리자 비밀번호    : 본인이 정한 8자 이상 문자열
-사이트 URL        : https://my-blog.vercel.app (배포 후 채움)
+[ ] GitHub Username       : j-kim-blog
+[ ] GitHub 저장소 URL      : (PHASE 1에서 채움)
+[ ] Turso DB URL          : libsql://my-blog-db-xxxx.turso.io
+[ ] Turso Auth Token      : eyJ... (긴 문자열)
+[ ] Gemini API Key        : AIzaSy...
+[ ] 관리자 비밀번호         : 본인이 정한 8자 이상 문자열
+[ ] Vercel 사이트 URL      : (PHASE 5에서 채움)
 ```
+
+> 🚨 **절대 하지 말 것**: 위 키들을 카톡·이메일·블로그 어디에도 올리지 마세요. 누가 키를 훔치면 본인 명의로 AI 호출이 무한히 일어나거나 DB가 털립니다.
 
 ---
 
