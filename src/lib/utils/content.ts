@@ -40,7 +40,21 @@ export function unwrapContent(content: string): string {
         return parsed.content
       }
     } catch {
-      // Not valid JSON, return original
+      // JSON might be truncated — try regex extraction as fallback
+      const contentMatch = text.match(/"content"\s*:\s*"([\s\S]*)$/)
+      if (contentMatch) {
+        let markdown = contentMatch[1]
+        // Remove trailing JSON artifacts
+        if (markdown.endsWith('"}')) markdown = markdown.slice(0, -2)
+        else if (markdown.endsWith('"')) markdown = markdown.slice(0, -1)
+        // Unescape JSON string escapes
+        markdown = markdown
+          .replace(/\\n/g, '\n')
+          .replace(/\\t/g, '\t')
+          .replace(/\\"/g, '"')
+          .replace(/\\\\/g, '\\')
+        if (markdown.length > 100) return markdown
+      }
     }
   }
 

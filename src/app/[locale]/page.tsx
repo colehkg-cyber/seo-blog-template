@@ -7,8 +7,8 @@ import { siteConfig, brandConfig, navigationConfig } from '@/config'
 import { shouldUseNextImage } from '@/lib/image-utils'
 import { tagsToArray } from '@/lib/utils/tags'
 
-// Static generation with ISR (Incremental Static Regeneration)
-export const revalidate = 3600 // Revalidate every hour
+// Always fetch latest data on each request
+export const dynamic = 'force-dynamic'
 
 export async function generateMetadata({
   params,
