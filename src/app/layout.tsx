@@ -7,6 +7,7 @@ import { GoogleAnalytics } from '@/components/GoogleAnalytics';
 import ServiceWorkerRegistration from '@/components/ServiceWorkerRegistration';
 import AdBlockerNotice from '@/components/AdBlockerNotice';
 import { siteConfig, brandConfig, featuresConfig } from '@/config';
+import { getSettingValue } from '@/lib/settings';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,68 +27,82 @@ const geistMono = Geist_Mono({
   fallback: ['ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'monospace'],
 });
 
-export const metadata: Metadata = {
-  metadataBase: new URL(siteConfig.url),
-  title: {
-    default: siteConfig.title[siteConfig.defaultLocale],
-    template: `%s | ${siteConfig.shortName}`
-  },
-  description: siteConfig.description[siteConfig.defaultLocale],
-  keywords: [...siteConfig.keywords],
-  authors: [{ name: siteConfig.author.name }],
-  creator: siteConfig.author.name,
-  publisher: siteConfig.author.name,
-  icons: {
-    icon: [
-      { url: '/favicon.ico', sizes: '32x32' },
-      { url: '/favicon.svg', type: 'image/svg+xml' },
-    ],
-    apple: '/apple-touch-icon.png',
-  },
-  openGraph: {
-    type: "website",
-    locale: siteConfig.defaultLocale === 'ko' ? 'ko_KR' : 'en_US',
-    url: siteConfig.url,
-    siteName: siteConfig.name,
-    title: siteConfig.title[siteConfig.defaultLocale],
-    description: siteConfig.description[siteConfig.defaultLocale],
-    images: [
-      {
-        url: brandConfig.ogImage,
-        width: 1200,
-        height: 630,
-        alt: siteConfig.name
-      }
-    ]
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: siteConfig.name,
-    description: siteConfig.description[siteConfig.defaultLocale],
-    ...(siteConfig.social.twitter ? { creator: siteConfig.social.twitter } : {}),
-    images: [brandConfig.ogImage]
-  },
-  robots: {
-    index: true,
-    follow: true,
-    googleBot: {
+export async function generateMetadata(): Promise<Metadata> {
+  let faviconUrl: string | undefined
+  let metaDescription: string | undefined
+
+  try {
+    faviconUrl = await getSettingValue('SITE_FAVICON_URL')
+    metaDescription = await getSettingValue('SITE_META_DESCRIPTION')
+  } catch {
+    // DB unavailable — use config defaults
+  }
+
+  const description = metaDescription || siteConfig.description[siteConfig.defaultLocale]
+
+  return {
+    metadataBase: new URL(siteConfig.url),
+    title: {
+      default: siteConfig.title[siteConfig.defaultLocale],
+      template: `%s | ${siteConfig.shortName}`
+    },
+    description,
+    keywords: [...siteConfig.keywords],
+    authors: [{ name: siteConfig.author.name }],
+    creator: siteConfig.author.name,
+    publisher: siteConfig.author.name,
+    ...(faviconUrl ? {
+      icons: {
+        icon: faviconUrl,
+        apple: faviconUrl,
+      },
+    } : {}),
+    openGraph: {
+      type: "website",
+      locale: siteConfig.defaultLocale === 'ko' ? 'ko_KR' : 'en_US',
+      url: siteConfig.url,
+      siteName: siteConfig.name,
+      title: siteConfig.title[siteConfig.defaultLocale],
+      description,
+      images: [
+        {
+          url: brandConfig.ogImage,
+          width: 1200,
+          height: 630,
+          alt: siteConfig.name
+        }
+      ]
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: siteConfig.name,
+      description,
+      ...(siteConfig.social.twitter ? { creator: siteConfig.social.twitter } : {}),
+      images: [brandConfig.ogImage]
+    },
+    robots: {
       index: true,
       follow: true,
-      'max-video-preview': -1,
-      'max-image-preview': 'large',
-      'max-snippet': -1,
+      googleBot: {
+        index: true,
+        follow: true,
+        'max-video-preview': -1,
+        'max-image-preview': 'large',
+        'max-snippet': -1,
+      },
     },
-  },
-  alternates: {
-    canonical: siteConfig.url,
-    languages: Object.fromEntries(
-      siteConfig.locales.map(locale => [locale, `/${locale}`])
-    ),
-  },
-  verification: {
-    google: siteConfig.verification.google || undefined,
-  },
-};
+    alternates: {
+      canonical: siteConfig.url,
+      languages: {
+        ko: '/',
+        'x-default': '/',
+      },
+    },
+    verification: {
+      google: siteConfig.verification.google || undefined,
+    },
+  }
+}
 
 export default function RootLayout({
   children,
@@ -115,16 +130,12 @@ export default function RootLayout({
   }
 
   return (
-    <html lang="en">
+    <html lang="ko">
       <head>
-        <link rel="icon" href="/favicon.ico" sizes="32x32" />
-        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
-        <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-        
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
         <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         <link rel="dns-prefetch" href="https://pagead2.googlesyndication.com" />
-        
+
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}

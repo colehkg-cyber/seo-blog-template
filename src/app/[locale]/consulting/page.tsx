@@ -139,7 +139,7 @@ export default async function ConsultingPage({
       <header className="border-b border-gray-100">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-6">
-            <Link href={`/${locale}`} className="flex items-center gap-3 group">
+            <Link href="/" className="flex items-center gap-3 group">
               <div className="w-10 h-10 rounded-full bg-gray-100 overflow-hidden border border-gray-200">
                 <img src="/images/character.png" alt="Cole It AI Logo" className="w-full h-full object-cover" />
               </div>
@@ -151,13 +151,13 @@ export default async function ConsultingPage({
             <div className="flex items-center gap-4">
               <div className="flex gap-1 bg-gray-100 p-1 rounded-md">
                 <Link
-                  href={`/ko/consulting`}
+                  href="/consulting"
                   className={`px-3 py-1 text-xs font-semibold rounded ${lang === 'ko' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                   KO
                 </Link>
                 <Link
-                  href={`/en/consulting`}
+                  href="/consulting"
                   className={`px-3 py-1 text-xs font-semibold rounded ${lang === 'en' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
                 >
                   EN

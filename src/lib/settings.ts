@@ -12,6 +12,8 @@ const ALLOWED_KEYS = [
   'CRON_SECRET',
   'REDEPLOY_WEBHOOK_URL',
   'THREADS_DEFAULT_ACCOUNT',
+  'SITE_FAVICON_URL',
+  'SITE_META_DESCRIPTION',
 ] as const
 
 export type SettingKey = (typeof ALLOWED_KEYS)[number]

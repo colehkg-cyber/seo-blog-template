@@ -13,6 +13,6 @@ export const languageNames: Record<Locale, string> = {
 export function getAlternateLinks(pathname: string) {
   return locales.map((locale) => ({
     locale,
-    url: `/${locale}${pathname}`,
+    url: pathname,
   }))
 }

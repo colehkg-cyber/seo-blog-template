@@ -21,10 +21,10 @@ export async function generateMetadata({
     title: siteConfig.title.ko,
     description: siteConfig.description.ko,
     alternates: {
-      canonical: `${siteConfig.url}/${locale}`,
+      canonical: siteConfig.url,
       languages: {
-        ko: '/ko',
-        'x-default': `/${siteConfig.defaultLocale}`,
+        ko: '/',
+        'x-default': '/',
       }
     },
     ...(siteConfig.verification.naver ? {
@@ -123,7 +123,7 @@ export default async function HomePage({
             {(navigationConfig.ko).map((item, index) => (
               <Link
                 key={item.href}
-                href={`/${locale}${item.href === '/' ? '' : item.href}`}
+                href={item.href}
                 className={`text-sm font-medium pb-2 ${
                   index === 0 
                     ? 'text-gray-900 border-b-2 border-gray-900' 
@@ -144,7 +144,7 @@ export default async function HomePage({
             {featuredPost && (
               <section className="mb-16">
                 <article className="bg-gray-50 rounded-2xl p-8 lg:p-12">
-                  <Link href={`/${locale}/posts/${featuredPost.slug}`} className="block">
+                  <Link href={`/posts/${featuredPost.slug}`} className="block">
                     <div className="grid lg:grid-cols-2 gap-8 items-center">
                       {featuredPost.coverImage && (
                         <div className="relative aspect-[16/9] overflow-hidden rounded-xl bg-white w-full max-w-none">
@@ -201,14 +201,14 @@ export default async function HomePage({
               <section className="mb-16">
                 <div className="flex justify-between items-center mb-8">
                   <h2 className="text-xl font-bold text-gray-900">Most Popular</h2>
-                  <Link href={`/${locale}/archive`} className="text-sm font-medium text-gray-600 hover:text-gray-900">
+                  <Link href="/archive" className="text-sm font-medium text-gray-600 hover:text-gray-900">
                     VIEW ALL
                   </Link>
                 </div>
                 <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
                   {recentPosts.map((post, index) => (
                     <article key={post.id} className="group" style={{ minHeight: '280px' }}>
-                      <Link href={`/${locale}/posts/${post.slug}`} className="block">
+                      <Link href={`/posts/${post.slug}`} className="block">
                         <div className="space-y-3">
                           {post.coverImage && (
                             <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-gray-100 w-full" style={{ contain: 'layout' }}>
@@ -266,7 +266,7 @@ export default async function HomePage({
                 <div className="space-y-8">
                   {morePosts.map((post) => (
                     <article key={post.id} className="group" style={{ minHeight: '180px' }}>
-                      <Link href={`/${locale}/posts/${post.slug}`} className="block">
+                      <Link href={`/posts/${post.slug}`} className="block">
                         <div className="grid md:grid-cols-3 gap-6 items-start">
                           {post.coverImage && (
                             <div className="relative aspect-[16/9] overflow-hidden rounded-lg bg-gray-100" style={{ contain: 'layout' }}>
@@ -319,7 +319,7 @@ export default async function HomePage({
                   ))}
                 </div>
                 <div className="mt-12 text-center">
-                  <Link href={`/${locale}/archive`} className="inline-flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-gray-700">
+                  <Link href="/archive" className="inline-flex items-center gap-2 text-sm font-medium text-gray-900 hover:text-gray-700">
                     See all
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -352,13 +352,13 @@ export default async function HomePage({
             </div>
             <div>
               <ul className="space-y-2">
-                <li><Link href={`/${locale}/about`} className="text-gray-600 hover:text-gray-900">About</Link></li>
-                <li><Link href={`/${locale}/archive`} className="text-gray-600 hover:text-gray-900">Archive</Link></li>
+                <li><Link href="/about" className="text-gray-600 hover:text-gray-900">About</Link></li>
+                <li><Link href="/archive" className="text-gray-600 hover:text-gray-900">Archive</Link></li>
               </ul>
             </div>
             <div>
               <ul className="space-y-2">
-                <li><Link href={`/${locale}/sitemap`} className="text-gray-600 hover:text-gray-900">Sitemap</Link></li>
+                <li><Link href="/sitemap" className="text-gray-600 hover:text-gray-900">Sitemap</Link></li>
               </ul>
             </div>
           </div>

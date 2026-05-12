@@ -14,7 +14,7 @@ export default function PageLayout({ locale, currentPath, children }: PageLayout
       <header className="border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-8">
-            <a href={brandConfig.logo.url || `/${locale}`} className="flex items-center">
+            <a href={brandConfig.logo.url || '/'} className="flex items-center">
               {brandConfig.logo.image ? (
                 <img src={brandConfig.logo.image} alt={brandConfig.logo.text} className="h-6 w-auto" />
               ) : (
@@ -27,7 +27,7 @@ export default function PageLayout({ locale, currentPath, children }: PageLayout
             {(navigationConfig.ko).map((item) => (
               <Link
                 key={item.href}
-                href={`/${locale}${item.href === '/' ? '' : item.href}`}
+                href={item.href}
                 className={`text-sm font-medium pb-2 ${
                   currentPath === item.href
                     ? 'text-gray-900 border-b-2 border-gray-900' 

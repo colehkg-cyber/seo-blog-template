@@ -31,7 +31,7 @@ export default function ArchiveClient({ posts, locale }: ArchiveClientProps) {
           {posts.map((post) => (
             <article key={post.id} className="border-b border-gray-200 pb-4">
               <Link
-                href={`/${locale}/posts/${post.slug}`}
+                href={`/posts/${post.slug}`}
                 className="block hover:bg-gray-50 -mx-4 px-4 py-2 rounded transition-colors"
               >
                 <div className="flex justify-between items-baseline gap-4">

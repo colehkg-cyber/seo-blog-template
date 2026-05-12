@@ -100,7 +100,7 @@ export default async function SitemapPage({
               {mainPages.map((page) => (
                 <li key={page.href}>
                   <Link
-                    href={`/${locale}${page.href === '/' ? '' : page.href}`}
+                    href={page.href}
                     className="text-blue-600 hover:text-blue-800 hover:underline"
                   >
                     {page.title}
@@ -128,7 +128,7 @@ export default async function SitemapPage({
                   return (
                     <li key={post.slug} className="flex justify-between items-start">
                       <Link
-                        href={`/${locale}/posts/${post.slug}`}
+                        href={`/posts/${post.slug}`}
                         className="text-blue-600 hover:text-blue-800 hover:underline flex-1 mr-4"
                       >
                         {title}

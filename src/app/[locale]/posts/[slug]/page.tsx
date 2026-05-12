@@ -14,7 +14,6 @@ import { calculateReadingTime, formatReadingTime } from '@/lib/reading-time'
 import ViewCounter from '@/components/ViewCounter'
 import { siteConfig, brandConfig, navigationConfig, featuresConfig } from '@/config'
 import { shouldUseNextImage } from '@/lib/image-utils'
-import { optimizeUnsplashUrl } from '@/lib/unsplash'
 import { tagsToArray } from '@/lib/utils/tags'
 import { unwrapContent } from '@/lib/utils/content'
 
@@ -107,9 +106,10 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     title: post.seoTitle || displayTitle,
     description: post.seoDescription || displayExcerpt || undefined,
     alternates: {
+      canonical: `/posts/${post.slug}`,
       languages: {
-        'ko': `/ko/posts/${post.slug}`,
-        'en': `/en/posts/${post.slug}`,
+        'ko': `/posts/${post.slug}`,
+        'x-default': `/posts/${post.slug}`,
       }
     },
     openGraph: {
@@ -244,7 +244,7 @@ export default async function PostPage({
         <header className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8" role="banner">
           <div className="border-b border-gray-100">
             <div className="flex justify-between items-center py-8">
-              <a href={brandConfig.logo.url || `/${locale}`} className="flex items-center">
+              <a href={brandConfig.logo.url || '/'} className="flex items-center">
                 {brandConfig.logo.image ? (
                   <img src={brandConfig.logo.image} alt={brandConfig.logo.text} className="h-6 w-auto" />
                 ) : (
@@ -257,7 +257,7 @@ export default async function PostPage({
               {(navigationConfig[lang as keyof typeof navigationConfig] ?? navigationConfig[siteConfig.defaultLocale]).map((item, index) => (
                 <Link
                   key={item.href}
-                  href={`/${locale}${item.href === '/' ? '' : item.href}`}
+                  href={item.href}
                   className={`text-sm font-medium pb-2 ${
                     item.href === '/archive'
                       ? 'text-gray-900 border-b-2 border-gray-900'
@@ -310,47 +310,23 @@ export default async function PostPage({
           {post.coverImage && (
             <div className="relative w-full max-w-4xl mb-6 rounded-lg overflow-hidden bg-gray-100">
               <div className="relative aspect-[16/9] w-full">
-                {(() => {
-                  // Unsplash: optimize URL for auto-format (AVIF/WebP) + smaller size
-                  if (post.coverImage.includes('images.unsplash.com')) {
-                    const optimizedSrc = optimizeUnsplashUrl(post.coverImage)
-                    return (
-                      <Image
-                        src={optimizedSrc}
-                        alt={displayTitle}
-                        fill
-                        className="object-cover bg-gray-100"
-                        priority
-                        unoptimized
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-                      />
-                    )
-                  }
-
-                  // Use conditional rendering based on image source
-                  if (shouldUseNextImage(post.coverImage)) {
-                    return (
-                      <Image
-                        src={post.coverImage}
-                        alt={displayTitle}
-                        fill
-                        className="object-cover bg-gray-100"
-                        priority
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-                      />
-                    )
-                  }
-
-                  // Use regular img tag for Vercel Blob Storage and other problematic images
-                  return (
-                    <img
-                      src={post.coverImage}
-                      alt={displayTitle}
-                      className="absolute inset-0 w-full h-full object-cover bg-gray-100"
-                      loading="eager"
-                    />
-                  )
-                })()}
+                {shouldUseNextImage(post.coverImage) ? (
+                  <Image
+                    src={post.coverImage}
+                    alt={displayTitle}
+                    fill
+                    className="object-cover bg-gray-100"
+                    priority
+                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+                  />
+                ) : (
+                  <img
+                    src={post.coverImage}
+                    alt={displayTitle}
+                    className="absolute inset-0 w-full h-full object-cover bg-gray-100"
+                    loading="eager"
+                  />
+                )}
               </div>
             </div>
           )}

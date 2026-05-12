@@ -14,27 +14,23 @@ export async function middleware(request: NextRequest) {
     const isWww = hostname.startsWith('www.')
     const hasTrailingSlash = pathname !== '/' && pathname.endsWith('/')
 
-    // Check if the pathname already has a locale
+    // Check if the pathname already has a locale prefix
     const pathnameHasLocale = locales.some(
       (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
     )
 
     // Subdomain Handling (consulting feature toggle)
-    // 이 기능은 featuresConfig.consulting이 true일 때만 활성화된다.
-    // Edge Runtime에서는 config를 직접 import할 수 없으므로 환경변수로 제어한다.
     const consultingEnabled = process.env.NEXT_PUBLIC_FEATURE_CONSULTING === 'true'
     const consultingDomain = process.env.NEXT_PUBLIC_CONSULTING_DOMAIN || ''
 
     if (consultingEnabled && isConsultingSubdomain) {
       if (!pathname.includes('/consulting')) {
-        const locale = (pathname === '/en' || pathname.startsWith('/en/')) ? 'en' : 'ko'
-        return NextResponse.redirect(new URL(`/${locale}/consulting`, request.url))
+        return NextResponse.redirect(new URL(`/consulting`, request.url))
       }
     }
 
     if (consultingEnabled && !isConsultingSubdomain && pathname.includes('/consulting') && consultingDomain) {
-      const locale = pathname.startsWith('/en') ? 'en' : 'ko'
-      return NextResponse.redirect(new URL(`https://${consultingDomain}/${locale}/consulting`, request.url))
+      return NextResponse.redirect(new URL(`https://${consultingDomain}/consulting`, request.url))
     }
 
     // Skip locale redirect for special routes
@@ -53,27 +49,29 @@ export async function middleware(request: NextRequest) {
     let needsRedirect = false
     let newUrl = url.clone()
 
-    // NOTE: Vercel redirects non-www to www, so we don't handle www removal here
-    // This prevents redirect loops
-
     // Remove trailing slash
     if (hasTrailingSlash) {
       newUrl.pathname = pathname.slice(0, -1)
-      pathname = newUrl.pathname // Update pathname for subsequent checks
+      pathname = newUrl.pathname
       needsRedirect = true
     }
 
-    // Add locale (always default to Korean)
-    if (!pathnameHasLocale && !skipLocaleRedirect) {
-      // Always use Korean as default locale
-      const locale = 'ko'
-      newUrl.pathname = `/${locale}${pathname}`
+    // Backward compatibility: redirect /ko/xxx → /xxx (remove locale prefix)
+    if (pathnameHasLocale && !skipLocaleRedirect) {
+      newUrl.pathname = pathname.replace(/^\/ko/, '') || '/'
       needsRedirect = true
     }
 
     // If any redirect is needed, do it in one hop
     if (needsRedirect) {
-      return NextResponse.redirect(newUrl, { status: 307 })
+      return NextResponse.redirect(newUrl, { status: 301 })
+    }
+
+    // Internal rewrite: add locale prefix for Next.js [locale] routing
+    if (!pathnameHasLocale && !skipLocaleRedirect) {
+      const rewriteUrl = request.nextUrl.clone()
+      rewriteUrl.pathname = `/ko${pathname}`
+      return NextResponse.rewrite(rewriteUrl)
     }
     
     if (request.nextUrl.pathname.startsWith('/admin')) {
