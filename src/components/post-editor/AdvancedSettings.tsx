@@ -169,17 +169,19 @@ export default function AdvancedSettings({ formData, onChange, title, isOpen, on
             )}
           </div>
 
-          {/* Coupang Link */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">쿠팡 파트너스 링크 (선택)</label>
-            <textarea
-              rows={2}
-              value={formData.coupangLink}
-              onChange={e => onChange({ coupangLink: e.target.value })}
-              placeholder="쿠팡 파트너스 URL 또는 iframe HTML"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
-            />
-          </div>
+          {/* Coupang Link (편집 시 수정 가능) */}
+          {formData.coupangLink && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">쿠팡 파트너스 링크</label>
+              <textarea
+                rows={2}
+                value={formData.coupangLink}
+                onChange={e => onChange({ coupangLink: e.target.value })}
+                placeholder="쿠팡 파트너스 URL 또는 iframe HTML"
+                className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
+              />
+            </div>
+          )}
         </div>
       )}
     </div>

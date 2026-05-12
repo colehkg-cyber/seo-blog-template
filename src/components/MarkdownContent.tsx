@@ -8,7 +8,8 @@ import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
 import LazyImage from './LazyImage'
 import type { Components } from 'react-markdown'
-import { unwrapContent } from '@/lib/utils/content'
+import { unwrapContent, cleanMarkdownHeadings } from '@/lib/utils/content'
+import { COUPANG_DISCLAIMER_TEXT, COUPANG_DISCLAIMER_MARKDOWN } from '@/lib/coupang'
 
 const CodeBlock = dynamic(() => import('./CodeBlock'), {
   loading: () => <code style={{ display: 'block', padding: '1rem', backgroundColor: '#1f2937', color: '#f3f4f6', borderRadius: '0.5rem', fontSize: '0.875rem', overflow: 'auto' }}>Loading...</code>,
@@ -25,9 +26,18 @@ function childrenToString(children: React.ReactNode): string {
   return ''
 }
 
+function hasCoupangContent(text: string): boolean {
+  return /coupa\.ng|coupang\.com|ads-partners\.coupang/i.test(text)
+}
+
 export default function MarkdownContent({ content: rawContent }: MarkdownContentProps) {
-  // Final defense: unwrap JSON-wrapped content before rendering
-  const content = unwrapContent(rawContent)
+  // Final defense: unwrap JSON-wrapped content and clean heading prefixes
+  let content = cleanMarkdownHeadings(unwrapContent(rawContent))
+
+  // Auto-append Coupang disclaimer if content has Coupang links/iframes but no disclaimer
+  if (hasCoupangContent(content) && !content.includes(COUPANG_DISCLAIMER_TEXT)) {
+    content = content + COUPANG_DISCLAIMER_MARKDOWN
+  }
   const createHeadingId = (text: React.ReactNode) => {
     const textString = childrenToString(text)
     // Use only text content for ID to ensure consistency between server and client
@@ -70,6 +80,7 @@ export default function MarkdownContent({ content: rawContent }: MarkdownContent
           table: ({children}) => <table style={{width: '100%', borderCollapse: 'collapse', margin: '1.5rem 0'}}>{children}</table>,
           th: ({children}) => <th style={{border: '1px solid #e5e7eb', padding: '0.5rem 1rem', textAlign: 'left', backgroundColor: '#f9fafb', fontWeight: 600}}>{children}</th>,
           td: ({children}) => <td style={{border: '1px solid #e5e7eb', padding: '0.5rem 1rem', textAlign: 'left'}}>{children}</td>,
+          small: ({children}) => <small style={{display: 'block', marginTop: '2rem', padding: '1rem', backgroundColor: '#f9fafb', borderRadius: '0.5rem', color: '#6b7280', fontSize: '0.8rem', lineHeight: 1.5}}>{children}</small>,
           iframe: ({src, title, width, height}) => {
             // Add privacy-enhanced mode for YouTube embeds
             let enhancedSrc = src || '';

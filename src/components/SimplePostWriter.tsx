@@ -25,6 +25,7 @@ export default function SimplePostWriter() {
   const [errorMessage, setErrorMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showAdvanced, setShowAdvanced] = useState(false)
+  const [isCoupangMode, setIsCoupangMode] = useState(false)
 
   const [formData, setFormData] = useState({
     title: '',
@@ -183,6 +184,65 @@ export default function SimplePostWriter() {
             disabled={generationStatus === 'generating'}
           />
 
+          {/* Post type toggle: Regular vs Coupang */}
+          <div className="flex gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsCoupangMode(false)
+                updateFormData({ coupangLink: '' })
+              }}
+              className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-xl border-2 transition-colors ${
+                !isCoupangMode
+                  ? 'border-indigo-500 bg-indigo-50 text-indigo-700'
+                  : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                </svg>
+                일반 글
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIsCoupangMode(true)}
+              className={`flex-1 py-2.5 px-4 text-sm font-medium rounded-xl border-2 transition-colors ${
+                isCoupangMode
+                  ? 'border-orange-500 bg-orange-50 text-orange-700'
+                  : 'border-gray-200 bg-white text-gray-500 hover:border-gray-300'
+              }`}
+            >
+              <span className="flex items-center justify-center gap-1.5">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                </svg>
+                쿠팡파트너스
+              </span>
+            </button>
+          </div>
+
+          {/* Coupang link input (visible only in Coupang mode) */}
+          {isCoupangMode && (
+            <div className="rounded-xl border-2 border-orange-200 bg-orange-50 p-4 space-y-2">
+              <label className="block text-sm font-semibold text-orange-800">
+                쿠팡 파트너스 링크 또는 iframe
+              </label>
+              <textarea
+                value={formData.coupangLink}
+                onChange={e => updateFormData({ coupangLink: e.target.value })}
+                placeholder={"쿠팡 파트너스 URL 또는 iframe HTML을 붙여넣으세요\n예: https://link.coupang.com/... 또는 <iframe src=\"https://ads-partners.coupang.com/...\" ...>"}
+                rows={3}
+                disabled={generationStatus === 'generating'}
+                className="w-full px-4 py-3 text-sm rounded-xl border border-orange-200 focus:border-orange-500 focus:ring-1 focus:ring-orange-200 resize-none bg-white"
+              />
+              <p className="text-xs text-orange-600">
+                면책 문구 &ldquo;이 포스팅은 쿠팡 파트너스 활동의 일환으로...&rdquo;가 자동으로 추가됩니다.
+              </p>
+            </div>
+          )}
+
           {/* Optional outline toggle */}
           <div>
             <button
@@ -211,8 +271,10 @@ export default function SimplePostWriter() {
           <button
             type="button"
             onClick={handleGenerate}
-            disabled={generationStatus === 'generating' || !prompt.trim()}
-            className="w-full py-3.5 text-base font-bold rounded-xl text-white bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2"
+            disabled={generationStatus === 'generating' || !prompt.trim() || (isCoupangMode && !formData.coupangLink.trim())}
+            className={`w-full py-3.5 text-base font-bold rounded-xl text-white disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 ${
+              isCoupangMode ? 'bg-orange-600 hover:bg-orange-700' : 'bg-indigo-600 hover:bg-indigo-700'
+            }`}
           >
             {generationStatus === 'generating' ? (
               <>
@@ -220,14 +282,14 @@ export default function SimplePostWriter() {
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                 </svg>
-                AI가 글을 작성하고 있어요...
+                {isCoupangMode ? '쿠팡 파트너스 글을 작성하고 있어요...' : 'AI가 글을 작성하고 있어요...'}
               </>
             ) : (
               <>
                 <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                   <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                 </svg>
-                글 생성하기
+                {isCoupangMode ? '쿠팡 리뷰 생성하기' : '글 생성하기'}
               </>
             )}
           </button>

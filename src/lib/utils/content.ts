@@ -61,3 +61,17 @@ export function unwrapContent(content: string): string {
   // Case 3: Already plain markdown
   return content
 }
+
+/**
+ * Clean up AI-generated markdown content.
+ * - Strips "H2:", "H3:", "H4:" prefixes from headings
+ * - Ensures proper markdown heading syntax
+ */
+export function cleanMarkdownHeadings(content: string): string {
+  if (!content || typeof content !== 'string') return content
+
+  return content.replace(
+    /^(#{2,4})\s*[Hh][2-4]\s*[:：]\s*/gm,
+    '$1 '
+  )
+}

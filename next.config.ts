@@ -168,7 +168,7 @@ const nextConfig: NextConfig = {
         },
         {
           key: 'Content-Security-Policy',
-          value: "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://*.doubleclick.net https://*.google.com https://*.googlesyndication.com https://*.adtrafficquality.google;",
+          value: "frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://*.doubleclick.net https://*.google.com https://*.googlesyndication.com https://*.adtrafficquality.google https://*.coupang.com https://coupa.ng https://*.coupa.ng;",
         },
       ],
     },
