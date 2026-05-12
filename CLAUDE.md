@@ -1,5 +1,32 @@
 # Coleitai Blog — 프로젝트 헌법
 
+## 0. 기본 스킬 스택 (project-dev-starter)
+
+이 프로젝트는 [openclaw-skills](https://github.com/colehkg-cyber/openclaw-skills)의 `project-dev-starter` 운영체계를 사용한다. 어떤 작업이든 아래 5개 스킬을 기본으로 적용한다 (trivial한 1줄 수정은 제외):
+
+- **development-lifecycle**: 요구사항 → 설계 → 구현 → 검증 → 리뷰 → 마무리 흐름 강제
+- **harness-engineering**: 장기 작업 환경 설계, 단일 진입점, 검증 루프
+- **context7-docs**: 라이브러리/API 변경 전 최신 공식 문서 확인 (Next.js 15, React 19, Prisma 6 등)
+- **systematic-debugging**: 재현 → 가설 → 검증 → 재검증 순서
+- **continuous-code-review**: 작업 단위별 지속 리뷰 루프
+
+필수 워크플로우:
+1. 코딩 전 요구사항을 명확히 한다
+2. 멀티 파일 변경은 작은 작업으로 쪼갠다
+3. 라이브러리/API/설정 변경 전 최신 공식 문서를 확인한다
+4. 장기 작업은 재현 가능한 실행/검증 루프를 쓴다
+5. 의미 있는 작업은 `worklog.md`에 기록한다
+6. 테스트·로그·증거 없이 완료를 선언하지 않는다
+7. 비-trivial 작업은 완료 전 코드 리뷰를 요청한다
+
+가드레일:
+- 계획 없이 광범위한 리팩토링 금지
+- 빠르게 변하는 프레임워크는 기억보다 공식 문서 우선
+- 재현 경로가 통과할 때까지 "고쳤다" 선언 금지
+- 검증을 조용히 건너뛰지 않는다
+
+문서 위치: `docs/workflow.md`, `docs/issue.md`, `docs/hypothesis.md`, `worklog.md`
+
 ## 1. 프로젝트 의도
 
 이 저장소는 **누구나 (중학생도) 본인만의 SEO 블로그를 만들 수 있는 "밀키트" 템플릿**이다.

@@ -100,7 +100,9 @@ export default function SimplePostWriter() {
     setIsSubmitting(true)
 
     try {
-      const publishedAt = publish ? new Date().toISOString() : null
+      // 체크박스("바로 발행하기")가 켜져 있으면 어떤 버튼이든 발행 처리
+      const shouldPublish = publish || !!formData.publishedAt
+      const publishedAt = shouldPublish ? new Date().toISOString() : null
       const body = {
         title: formData.title,
         slug: formData.slug || undefined,
@@ -408,7 +410,7 @@ export default function SimplePostWriter() {
             disabled={isSubmitting || !formData.title || !formData.content}
             className="px-5 py-2.5 text-sm font-medium text-gray-700 border border-gray-300 rounded-xl hover:bg-gray-50 disabled:opacity-50"
           >
-            {isSubmitting ? '저장 중...' : '초안 저장'}
+            {isSubmitting ? '저장 중...' : formData.publishedAt ? '저장 (발행)' : '초안 저장'}
           </button>
           <button
             type="button"

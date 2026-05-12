@@ -8,6 +8,9 @@ export default function AdminSettingsPage() {
   const [uploading, setUploading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
+  const [unsplashKey, setUnsplashKey] = useState('')
+  const [unsplashConfigured, setUnsplashConfigured] = useState(false)
+  const [savingUnsplash, setSavingUnsplash] = useState(false)
 
   useEffect(() => {
     // Load current settings
@@ -25,6 +28,10 @@ export default function AdminSettingsPage() {
           if (data.settings.SITE_META_DESCRIPTION?.isConfigured) {
             // For meta description we want full value, not masked
             // We'll load it separately
+          }
+          if (data.settings.UNSPLASH_ACCESS_KEY?.isConfigured) {
+            setUnsplashConfigured(true)
+            setUnsplashKey(data.settings.UNSPLASH_ACCESS_KEY.masked || '(설정됨)')
           }
         }
       })
@@ -68,6 +75,38 @@ export default function AdminSettingsPage() {
       setMessage('업로드 실패')
     } finally {
       setUploading(false)
+    }
+  }
+
+  async function handleSaveUnsplash() {
+    if (!unsplashKey.trim() || unsplashKey.startsWith('(') || unsplashKey.includes('••••')) {
+      setMessage('새 Unsplash Access Key를 입력하세요.')
+      return
+    }
+    setSavingUnsplash(true)
+    setMessage('')
+    try {
+      const res = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ UNSPLASH_ACCESS_KEY: unsplashKey.trim() }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setMessage(`오류: ${data.error || '저장 실패'}`)
+        return
+      }
+      setMessage('Unsplash Access Key가 저장되었습니다.')
+      setUnsplashConfigured(true)
+      // 보안상 입력 후 마스킹 표시
+      const masked = unsplashKey.length > 8
+        ? unsplashKey.slice(0, 4) + '••••' + unsplashKey.slice(-4)
+        : '••••••••'
+      setUnsplashKey(masked)
+    } catch {
+      setMessage('저장 실패')
+    } finally {
+      setSavingUnsplash(false)
     }
   }
 
@@ -147,6 +186,44 @@ export default function AdminSettingsPage() {
               )}
             </div>
           </div>
+        </section>
+
+        {/* Unsplash Access Key Section */}
+        <section className="mb-8 pb-8 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">Unsplash Access Key</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            글 썸네일을 Unsplash에서 자동으로 가져옵니다.{' '}
+            <a
+              href="https://unsplash.com/oauth/applications"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-blue-600 hover:underline"
+            >
+              Unsplash Developers
+            </a>
+            에서 무료로 발급받을 수 있습니다.
+          </p>
+          <div className="flex items-start gap-3">
+            <input
+              type="text"
+              value={unsplashKey}
+              onChange={(e) => setUnsplashKey(e.target.value)}
+              placeholder={unsplashConfigured ? '(설정됨 — 새 값으로 교체하려면 붙여넣기)' : 'Unsplash Access Key 입력'}
+              className="flex-1 px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm font-mono"
+            />
+            <button
+              onClick={handleSaveUnsplash}
+              disabled={savingUnsplash}
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 whitespace-nowrap"
+            >
+              {savingUnsplash ? '저장 중...' : '저장'}
+            </button>
+          </div>
+          {unsplashConfigured && (
+            <p className="mt-2 text-xs text-green-600">
+              ✓ 설정 완료 — 새 글 생성 시 Unsplash 썸네일이 자동 적용됩니다.
+            </p>
+          )}
         </section>
 
         {/* Meta Description Section */}

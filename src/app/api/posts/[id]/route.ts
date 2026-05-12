@@ -44,6 +44,8 @@ export const PUT = withErrorHandler(async (
 
   logger.info('Validation passed, updating post', { postId: id, validatedData: data });
 
+  // publishedAt이 지정되면 status를 PUBLISHED로, 비워두면 DRAFT로 유지/되돌림
+  const willPublish = !!data.publishedAt
   const post = await prisma.post.update({
     where: { id },
     data: {
@@ -57,6 +59,9 @@ export const PUT = withErrorHandler(async (
       seoTitle: data.seoTitle,
       seoDescription: data.seoDescription,
       publishedAt: data.publishedAt ? new Date(data.publishedAt) : null,
+      ...(data.publishedAt !== undefined
+        ? { status: willPublish ? 'PUBLISHED' : 'DRAFT' }
+        : {}),
     },
   });
 

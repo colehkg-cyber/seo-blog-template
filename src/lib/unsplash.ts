@@ -4,7 +4,13 @@
  * 블로그 포스트용 고품질 이미지를 자동으로 가져옵니다.
  */
 
-const UNSPLASH_ACCESS_KEY = process.env.UNSPLASH_ACCESS_KEY
+import { getSettingValue } from '@/lib/settings'
+
+async function getUnsplashKey(): Promise<string | undefined> {
+  // DB 설정 우선, env 폴백
+  const dbKey = await getSettingValue('UNSPLASH_ACCESS_KEY')
+  return dbKey || process.env.UNSPLASH_ACCESS_KEY
+}
 
 interface UnsplashImage {
   id: string
@@ -39,8 +45,9 @@ export async function searchUnsplashImage(
   query: string,
   orientation: 'landscape' | 'portrait' | 'squarish' = 'landscape'
 ): Promise<UnsplashImage | null> {
-  if (!UNSPLASH_ACCESS_KEY) {
-    console.warn('⚠️ UNSPLASH_ACCESS_KEY가 설정되지 않았습니다.')
+  const accessKey = await getUnsplashKey()
+  if (!accessKey) {
+    console.warn('⚠️ UNSPLASH_ACCESS_KEY가 설정되지 않았습니다. (admin 설정 또는 env에서 등록하세요)')
     return null
   }
 
@@ -52,7 +59,7 @@ export async function searchUnsplashImage(
 
     const response = await fetch(url.toString(), {
       headers: {
-        'Authorization': `Client-ID ${UNSPLASH_ACCESS_KEY}`,
+        'Authorization': `Client-ID ${accessKey}`,
         'Accept-Version': 'v1'
       }
     })

@@ -14,6 +14,7 @@ const ALLOWED_KEYS = [
   'THREADS_DEFAULT_ACCOUNT',
   'SITE_FAVICON_URL',
   'SITE_META_DESCRIPTION',
+  'UNSPLASH_ACCESS_KEY',
 ] as const
 
 export type SettingKey = (typeof ALLOWED_KEYS)[number]

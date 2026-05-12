@@ -8,6 +8,7 @@ import { withErrorHandler, logger, createSuccessResponse, validateRequest } from
 import { generateContentSchema } from '@/lib/validations';
 import { generateUniqueSlugWithTimestamp } from '@/lib/utils/slug';
 import { autoGenerateThumbnailUrl } from '@/lib/utils/thumbnail';
+import { searchUnsplashImage, extractImageKeywords, getOptimizedImageUrl } from '@/lib/unsplash';
 import { tagsToString } from '@/lib/utils/tags'
 import { unwrapContent } from '@/lib/utils/content'
 import { checkGeminiRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
@@ -133,7 +134,24 @@ async function generateContentHandler(request: NextRequest): Promise<NextRespons
   const scheduledAt = publishDate ? new Date(publishDate) : null;
   const slug = generateUniqueSlugWithTimestamp(parsedContent.title || prompt);
   const postTitle = parsedContent.title || prompt;
-  const coverImageUrl = parsedContent.coverImage || autoGenerateThumbnailUrl(postTitle, request);
+
+  // Cover image: parsed → Unsplash → OG fallback
+  let coverImageUrl: string = parsedContent.coverImage || '';
+  if (!coverImageUrl) {
+    try {
+      const query = extractImageKeywords(postTitle);
+      const image = await searchUnsplashImage(query);
+      if (image) {
+        coverImageUrl = getOptimizedImageUrl(image, 1080, 75);
+        logger.info('Unsplash thumbnail assigned at generation', { query });
+      }
+    } catch (err) {
+      logger.warn('Unsplash 검색 실패, OG 이미지로 폴백', { err: err instanceof Error ? err.message : String(err) });
+    }
+  }
+  if (!coverImageUrl) {
+    coverImageUrl = autoGenerateThumbnailUrl(postTitle, request);
+  }
 
   const post = await prisma.post.create({
     data: {
