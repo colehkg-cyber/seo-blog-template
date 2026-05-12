@@ -49,7 +49,7 @@ export const generateContentSchema = z.object({
   keywords: z.array(z.string()).max(20, 'Too many keywords').optional(),
   publishDate: z.string().datetime().optional(),
   draftOutline: z.string().max(5000).optional(),
-  coupangLink: z.string().max(2000).optional(),
+  coupangLink: z.string().max(5000).optional(),
 });
 
 // 파일 업로드 검증

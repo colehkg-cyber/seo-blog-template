@@ -11,6 +11,7 @@ interface Post {
   publishedAt: Date | null
   views: number
   coverImage: string | null
+  tags?: string
 }
 
 interface AdminPostsTableProps {
@@ -23,7 +24,7 @@ export function AdminPostsTable({ posts: initialPosts }: AdminPostsTableProps) {
   const [copiedTitle, setCopiedTitle] = useState<string | null>(null)
   const [copiedUrl, setCopiedUrl] = useState<string | null>(null)
   const [deletingPostId, setDeletingPostId] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft'>('all')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'published' | 'draft' | 'coupang'>('all')
   const [selectedPosts, setSelectedPosts] = useState<Set<string>>(new Set())
   const [loading, setLoading] = useState(false)
   const [isBulkPublishing, setIsBulkPublishing] = useState(false)
@@ -214,6 +215,7 @@ export function AdminPostsTable({ posts: initialPosts }: AdminPostsTableProps) {
   const filteredPosts = posts.filter(post => {
     if (statusFilter === 'published' && post.status !== 'PUBLISHED') return false
     if (statusFilter === 'draft' && post.status !== 'DRAFT') return false
+    if (statusFilter === 'coupang' && !(post.tags || '').includes('쿠팡')) return false
     return true
   })
 
@@ -258,6 +260,7 @@ export function AdminPostsTable({ posts: initialPosts }: AdminPostsTableProps) {
               <option value="all">모든 상태</option>
               <option value="published">발행됨</option>
               <option value="draft">초안</option>
+              <option value="coupang">쿠팡 파트너스</option>
             </select>
 
             {/* 일괄 발행 버튼 */}
@@ -372,6 +375,11 @@ export function AdminPostsTable({ posts: initialPosts }: AdminPostsTableProps) {
                       {copiedTitle === post.title && (
                         <span className="absolute -top-8 left-0 bg-gray-800 text-white text-xs rounded px-2 py-1">
                           복사됨!
+                        </span>
+                      )}
+                      {(post.tags || '').includes('쿠팡') && (
+                        <span className="shrink-0 rounded bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700 ring-1 ring-orange-600/20">
+                          쿠팡
                         </span>
                       )}
                     </div>

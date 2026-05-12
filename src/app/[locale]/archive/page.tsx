@@ -54,6 +54,7 @@ export default async function ArchivePage({
         title: true,
         excerpt: true,
         publishedAt: true,
+        tags: true,
       }
     })
 
@@ -63,6 +64,7 @@ export default async function ArchivePage({
       title: post.title,
       excerpt: post.excerpt,
       publishedAt: post.publishedAt?.toISOString() || null,
+      tags: post.tags,
     }))
 
     return (

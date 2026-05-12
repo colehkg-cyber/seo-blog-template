@@ -2,10 +2,12 @@ export const dynamic = 'force-dynamic'
 import { NextRequest, NextResponse } from 'next/server'
 import { promises as fs } from 'fs'
 import path from 'path'
+import { prisma } from '@/lib/prisma'
 
 const KNOWLEDGE_DIR = path.join(process.cwd(), 'knowledge')
 const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5MB
-const ALLOWED_EXTENSIONS = ['.md', '.txt', '.pdf']
+const UPLOAD_EXTENSIONS = ['.txt', '.pdf']
+const EDIT_EXTENSIONS = ['.md', '.txt']
 
 async function ensureDir() {
   try {
@@ -15,9 +17,22 @@ async function ensureDir() {
   }
 }
 
-function isAllowedFile(filename: string): boolean {
+function isEditableFile(filename: string): boolean {
   const ext = path.extname(filename).toLowerCase()
-  return ALLOWED_EXTENSIONS.includes(ext)
+  return EDIT_EXTENSIONS.includes(ext)
+}
+
+function makeArchiveContent(filename: string, content: string) {
+  return `# ${filename}\n\n${content.trim()}`
+}
+
+async function readKnowledgeRecord(filename: string) {
+  const records = await prisma.knowledge.findMany({
+    where: { source: filename },
+    orderBy: { createdAt: 'desc' },
+    take: 1,
+  })
+  return records[0] || null
 }
 
 /**
@@ -32,8 +47,13 @@ export async function GET(request: NextRequest) {
   // 개별 파일 내용 조회
   if (filename) {
     const safeName = path.basename(filename)
-    const filePath = path.join(KNOWLEDGE_DIR, safeName)
     try {
+      const record = await readKnowledgeRecord(safeName)
+      if (record) {
+        return NextResponse.json({ filename: safeName, content: record.content })
+      }
+
+      const filePath = path.join(KNOWLEDGE_DIR, safeName)
       const content = await fs.readFile(filePath, 'utf-8')
       return NextResponse.json({ filename: safeName, content })
     } catch {
@@ -41,27 +61,39 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // 전체 목록 조회 (.md, .txt, .pdf)
+  // 전체 목록 조회
   try {
+    const dbRecords = await prisma.knowledge.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 100,
+    })
+
+    const dbFiles = dbRecords.map((record) => ({
+      name: record.source || `knowledge-${record.id}.txt`,
+      size: Buffer.byteLength(record.content, 'utf-8'),
+      updatedAt: record.createdAt.toISOString(),
+      preview: record.content
+        .split('\n')
+        .find((line) => line.trim() && !line.startsWith('#'))
+        ?.trim()
+        .slice(0, 100) || '',
+      archived: true,
+    }))
+
     const entries = await fs.readdir(KNOWLEDGE_DIR, { withFileTypes: true })
     const files = await Promise.all(
       entries
-        .filter((e) => e.isFile() && isAllowedFile(e.name))
+        .filter((e) => e.isFile() && isEditableFile(e.name))
         .map(async (e) => {
           const filePath = path.join(KNOWLEDGE_DIR, e.name)
           const stat = await fs.stat(filePath)
 
           let preview = ''
-          // PDF는 미리보기 생략, 텍스트 파일만 미리보기
-          if (e.name.endsWith('.md') || e.name.endsWith('.txt')) {
-            try {
-              const content = await fs.readFile(filePath, 'utf-8')
-              preview = content.split('\n').find((line) => line.trim() && !line.startsWith('#'))?.trim().slice(0, 100) || ''
-            } catch {
-              // ignore
-            }
-          } else if (e.name.endsWith('.pdf')) {
-            preview = '(PDF 파일)'
+          try {
+            const content = await fs.readFile(filePath, 'utf-8')
+            preview = content.split('\n').find((line) => line.trim() && !line.startsWith('#'))?.trim().slice(0, 100) || ''
+          } catch {
+            // ignore
           }
 
           return {
@@ -69,13 +101,21 @@ export async function GET(request: NextRequest) {
             size: stat.size,
             updatedAt: stat.mtime.toISOString(),
             preview,
+            archived: false,
           }
         })
     )
 
-    files.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+    const seen = new Set<string>()
+    const allFiles = [...dbFiles, ...files].filter((file) => {
+      if (seen.has(file.name)) return false
+      seen.add(file.name)
+      return true
+    })
 
-    return NextResponse.json({ files })
+    allFiles.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+
+    return NextResponse.json({ files: allFiles })
   } catch {
     return NextResponse.json({ files: [] })
   }
@@ -85,7 +125,7 @@ export async function GET(request: NextRequest) {
  * POST /api/admin/knowledge
  * 지식 파일 생성/수정
  * - JSON 모드: { filename, content } — .md, .txt 인라인 에디터
- * - FormData 모드: file 필드로 PDF/TXT 업로드 (5MB 제한)
+ * - FormData 모드: file 필드로 PDF/TXT 업로드 (5MB 제한, DB 아카이빙)
  */
 export async function POST(request: NextRequest) {
   await ensureDir()
@@ -113,12 +153,15 @@ export async function POST(request: NextRequest) {
       const safeName = path.basename(file.name)
       const ext = path.extname(safeName).toLowerCase()
 
-      if (!ALLOWED_EXTENSIONS.includes(ext)) {
+      if (!UPLOAD_EXTENSIONS.includes(ext)) {
         return NextResponse.json(
-          { error: '.md, .txt, .pdf 파일만 업로드할 수 있습니다.' },
+          { error: '.txt, .pdf 파일만 업로드할 수 있습니다.' },
           { status: 400 }
         )
       }
+
+      let archiveName = safeName
+      let archiveContent = ''
 
       if (ext === '.pdf') {
         // PDF → 텍스트 추출 → .md 로 변환 저장
@@ -129,14 +172,8 @@ export async function POST(request: NextRequest) {
           const textResult = await pdf.getText()
           const extractedText = textResult.text
 
-          // PDF 파일명에서 .pdf를 .md로 변경
-          const mdName = safeName.replace(/\.pdf$/i, '.md')
-          const filePath = path.join(KNOWLEDGE_DIR, mdName)
-
-          const mdContent = `# ${safeName} (PDF에서 추출)\n\n${extractedText}`
-          await fs.writeFile(filePath, mdContent, 'utf-8')
-
-          return NextResponse.json({ ok: true, filename: mdName, converted: true })
+          archiveName = safeName.replace(/\.pdf$/i, '.txt')
+          archiveContent = makeArchiveContent(`${safeName} (PDF에서 추출)`, extractedText)
         } catch (err) {
           console.error('PDF 파싱 실패:', err)
           return NextResponse.json(
@@ -145,13 +182,31 @@ export async function POST(request: NextRequest) {
           )
         }
       } else {
-        // .txt, .md → 그대로 저장
         const content = await file.text()
-        const filePath = path.join(KNOWLEDGE_DIR, safeName)
-        await fs.writeFile(filePath, content, 'utf-8')
-
-        return NextResponse.json({ ok: true, filename: safeName })
+        archiveContent = makeArchiveContent(safeName, content)
       }
+
+      await prisma.knowledge.deleteMany({ where: { source: archiveName } })
+      const record = await prisma.knowledge.create({
+        data: {
+          source: archiveName,
+          content: archiveContent,
+          embedding: JSON.stringify({
+            originalName: safeName,
+            mimeType: file.type || 'application/octet-stream',
+            size: file.size,
+            archivedAt: new Date().toISOString(),
+          }),
+        },
+      })
+
+      return NextResponse.json({
+        ok: true,
+        filename: archiveName,
+        id: record.id,
+        archived: true,
+        converted: ext === '.pdf',
+      })
     } catch {
       return NextResponse.json({ error: '파일 업로드에 실패했습니다.' }, { status: 500 })
     }
@@ -168,12 +223,21 @@ export async function POST(request: NextRequest) {
     const safeName = path.basename(filename)
     const ext = path.extname(safeName).toLowerCase()
 
-    if (ext !== '.md' && ext !== '.txt') {
+    if (!EDIT_EXTENSIONS.includes(ext)) {
       return NextResponse.json({ error: '.md 또는 .txt 파일만 직접 편집할 수 있습니다.' }, { status: 400 })
     }
 
-    const filePath = path.join(KNOWLEDGE_DIR, safeName)
-    await fs.writeFile(filePath, content, 'utf-8')
+    await prisma.knowledge.deleteMany({ where: { source: safeName } })
+    await prisma.knowledge.create({
+      data: {
+        source: safeName,
+        content,
+        embedding: JSON.stringify({
+          createdBy: 'inline-editor',
+          archivedAt: new Date().toISOString(),
+        }),
+      },
+    })
 
     return NextResponse.json({ ok: true, filename: safeName })
   } catch {
@@ -196,9 +260,13 @@ export async function DELETE(request: NextRequest) {
     }
 
     const safeName = path.basename(filename)
-    const filePath = path.join(KNOWLEDGE_DIR, safeName)
 
-    await fs.unlink(filePath)
+    const deleted = await prisma.knowledge.deleteMany({ where: { source: safeName } })
+
+    if (deleted.count === 0) {
+      const filePath = path.join(KNOWLEDGE_DIR, safeName)
+      await fs.unlink(filePath)
+    }
 
     return NextResponse.json({ ok: true })
   } catch {

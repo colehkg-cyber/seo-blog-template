@@ -70,9 +70,32 @@ export default function MarkdownContent({ content: rawContent }: MarkdownContent
           table: ({children}) => <table style={{width: '100%', borderCollapse: 'collapse', margin: '1.5rem 0'}}>{children}</table>,
           th: ({children}) => <th style={{border: '1px solid #e5e7eb', padding: '0.5rem 1rem', textAlign: 'left', backgroundColor: '#f9fafb', fontWeight: 600}}>{children}</th>,
           td: ({children}) => <td style={{border: '1px solid #e5e7eb', padding: '0.5rem 1rem', textAlign: 'left'}}>{children}</td>,
-          iframe: ({src, title}) => {
+          iframe: ({src, title, width, height}) => {
             // Add privacy-enhanced mode for YouTube embeds
             let enhancedSrc = src || '';
+            const isCoupang =
+              !!src &&
+              (src.includes('coupa.ng') ||
+                src.includes('coupang.com') ||
+                src.includes('ads-partners.coupang.com'))
+
+            if (isCoupang) {
+              return (
+                <div style={{display: 'flex', justifyContent: 'center', margin: '2rem 0'}}>
+                  <iframe
+                    src={enhancedSrc}
+                    title={title || 'Coupang Partners banner'}
+                    width={typeof width === 'number' ? width : width || '120'}
+                    height={typeof height === 'number' ? height : height || '240'}
+                    style={{border: 0, maxWidth: '100%'}}
+                    loading="lazy"
+                    referrerPolicy="unsafe-url"
+                    scrolling="no"
+                  />
+                </div>
+              )
+            }
+
             if (src && src.includes('youtube.com/embed/')) {
               enhancedSrc = src.replace('youtube.com/embed/', 'youtube-nocookie.com/embed/');
               // Add parameters to reduce cookies and improve performance

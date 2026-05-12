@@ -1,5 +1,7 @@
 import { promises as fs } from 'fs'
 import path from 'path'
+import { prisma } from '@/lib/prisma'
+import { extractCoupangUrl, sanitizeCoupangEmbed } from '@/lib/coupang'
 
 const KNOWLEDGE_DIR = path.join(process.cwd(), 'knowledge')
 const SYSTEM_INSTRUCTION_FILE = 'system-instruction.md'
@@ -49,11 +51,43 @@ export async function getSystemInstruction(): Promise<string> {
 }
 
 /**
- * knowledge/ 디렉토리의 모든 지식 파일(.md, .txt)을 읽어 컨텍스트 문자열로 반환합니다.
- * system-instruction.md는 제외합니다.
- * 파일당 3000자 제한 (토큰 폭발 방지)
+ * DB에 아카이빙된 지식과 로컬 knowledge/ 파일을 함께 읽어옵니다.
+ * 간단 RAG 버전: query와 겹치는 단어가 많은 지식을 우선 사용합니다.
  */
-export async function getAllKnowledgeContext(): Promise<string> {
+export async function getRelevantKnowledgeContext(query: string = ''): Promise<string> {
+  const MAX_CHARS_PER_SOURCE = 3500
+  const MAX_SOURCES = 6
+  const queryTerms = query
+    .toLowerCase()
+    .split(/[\s,.;:!?()[\]{}"'`~]+/)
+    .map((term) => term.trim())
+    .filter((term) => term.length >= 2)
+
+  const scoreContent = (content: string, source: string) => {
+    if (queryTerms.length === 0) return 1
+    const haystack = `${source}\n${content}`.toLowerCase()
+    return queryTerms.reduce((score, term) => score + (haystack.includes(term) ? 1 : 0), 0)
+  }
+
+  const sources: Array<{ source: string; content: string; updatedAt?: Date }> = []
+
+  try {
+    const records = await prisma.knowledge.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 50,
+    })
+
+    for (const record of records) {
+      sources.push({
+        source: record.source || `knowledge-${record.id}`,
+        content: record.content,
+        updatedAt: record.createdAt,
+      })
+    }
+  } catch {
+    // DB가 아직 준비되지 않은 로컬/빌드 환경에서는 파일 기반 지식만 사용합니다.
+  }
+
   try {
     await fs.mkdir(KNOWLEDGE_DIR, { recursive: true })
     const entries = await fs.readdir(KNOWLEDGE_DIR, { withFileTypes: true })
@@ -65,35 +99,47 @@ export async function getAllKnowledgeContext(): Promise<string> {
         e.name !== SYSTEM_INSTRUCTION_FILE
     )
 
-    if (knowledgeFiles.length === 0) return ''
-
-    const MAX_CHARS_PER_FILE = 3000
-    const chunks: string[] = []
-
     for (const file of knowledgeFiles) {
       try {
         const filePath = path.join(KNOWLEDGE_DIR, file.name)
-        let content = await fs.readFile(filePath, 'utf-8')
-        if (content.length > MAX_CHARS_PER_FILE) {
-          content = content.substring(0, MAX_CHARS_PER_FILE) + '\n...(truncated)'
-        }
-        chunks.push(`[지식 파일: ${file.name}]\n${content}`)
+        const content = await fs.readFile(filePath, 'utf-8')
+        sources.push({ source: file.name, content })
       } catch {
         // 개별 파일 읽기 실패는 무시
       }
     }
-
-    if (chunks.length === 0) return ''
-
-    return (
-      '\n\n**참고 지식 (Knowledge Context):**\n' +
-      chunks.join('\n\n---\n\n') +
-      '\n\n**위 지식을 참고하여 전문성을 반영해 글을 작성해주세요.**\n\n'
-    )
   } catch {
-    return ''
+    // 로컬 파일 지식이 없어도 DB 지식은 그대로 사용합니다.
   }
+
+  if (sources.length === 0) return ''
+
+  const chunks = sources
+    .map((item) => ({
+      ...item,
+      score: scoreContent(item.content, item.source),
+    }))
+    .filter((item) => queryTerms.length === 0 || item.score > 0)
+    .sort((a, b) => b.score - a.score)
+    .slice(0, MAX_SOURCES)
+    .map((item) => {
+      const content =
+        item.content.length > MAX_CHARS_PER_SOURCE
+          ? item.content.substring(0, MAX_CHARS_PER_SOURCE) + '\n...(truncated)'
+          : item.content
+      return `[지식 자료: ${item.source}]\n${content}`
+    })
+
+  if (chunks.length === 0) return ''
+
+  return (
+    '\n\n**참고 지식 (Knowledge Context):**\n' +
+    chunks.join('\n\n---\n\n') +
+    '\n\n**위 지식을 사실 근거와 전문성 보강 자료로 참고해서 글을 작성해주세요.**\n\n'
+  )
 }
+
+export const getAllKnowledgeContext = getRelevantKnowledgeContext
 
 /**
  * 사용자 입력으로부터 AI 콘텐츠 생성 프롬프트를 만듭니다.
@@ -131,16 +177,20 @@ export function generateContentPrompt(
  * 쿠팡 파트너스 상품 리뷰 모드 프롬프트
  */
 export function generateCoupangPrompt(coupangLink: string): string {
+  const coupangUrl = extractCoupangUrl(coupangLink)
+  const coupangEmbed = sanitizeCoupangEmbed(coupangLink)
+
   return `
 **쿠팡 파트너스 상품 리뷰 모드:**
-- 아래 쿠팡 상품 링크를 본문 중간에 자연스럽게 삽입해주세요.
-- 상품 링크: ${coupangLink}
-- 링크 형식: [상품명 또는 관련 텍스트](${coupangLink})
+- 아래 쿠팡 파트너스 URL 또는 배너를 바탕으로 해당 상품에 대한 글을 작성해주세요.
+- 쿠팡 파트너스 URL: ${coupangUrl}
+${coupangEmbed ? `- 본문 중간에 아래 배너 HTML을 그대로 한 번 포함해주세요:\n${coupangEmbed}` : `- 링크 형식: [상품명 또는 관련 텍스트](${coupangUrl})`}
 - 상품에 대한 객관적 정보와 실제 사용 관점의 리뷰를 포함하세요.
 - 과장 광고 금지, 장단점을 균형 있게 서술하세요.
+- 태그에는 반드시 "쿠팡파트너스"를 포함하세요.
 
 **필수 면책 문구 (반드시 글 마지막에 포함):**
-> 이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+<small>이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.</small>
 `
 }
 

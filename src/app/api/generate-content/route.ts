@@ -2,7 +2,7 @@ export const dynamic = "force-dynamic"
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from '@/lib/prisma';
-import { getSystemInstruction, getAllKnowledgeContext, generateContentPrompt, generateCoupangPrompt } from '@/lib/ai-prompts';
+import { getSystemInstruction, getRelevantKnowledgeContext, generateContentPrompt, generateCoupangPrompt } from '@/lib/ai-prompts';
 import { env } from '@/lib/env';
 import { withErrorHandler, logger, createSuccessResponse, validateRequest } from '@/lib/error-handler';
 import { generateContentSchema } from '@/lib/validations';
@@ -12,35 +12,52 @@ import { tagsToString } from '@/lib/utils/tags'
 import { unwrapContent } from '@/lib/utils/content'
 import { checkGeminiRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
 import { verifyAdminAuth } from '@/lib/auth';
+import {
+  COUPANG_DISCLAIMER_MARKDOWN,
+  COUPANG_DISCLAIMER_TEXT,
+  extractCoupangUrl,
+  isCoupangPartnerInput,
+  sanitizeCoupangEmbed,
+} from '@/lib/coupang';
 
 const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY || '');
 
-const COUPANG_DISCLAIMER = '\n\n> 이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.\n';
-
-async function generateContentHandler(request: NextRequest) {
+async function generateContentHandler(request: NextRequest): Promise<NextResponse> {
   // Validate input data
   const validatedData = await validateRequest(request, generateContentSchema);
   const { prompt, keywords, publishDate, draftOutline, coupangLink } = validatedData;
+  const normalizedCoupangUrl = coupangLink ? extractCoupangUrl(coupangLink) : '';
+  const coupangEmbed = coupangLink ? sanitizeCoupangEmbed(coupangLink) : '';
+  const hasCoupangInput = !!coupangLink?.trim();
 
   logger.info('Generating content', {
     promptLength: prompt.length,
     keywordsCount: keywords?.length || 0,
     hasDraftOutline: !!draftOutline,
-    hasCoupangLink: !!coupangLink,
+    hasCoupangLink: hasCoupangInput,
   });
+
+  if (hasCoupangInput && !isCoupangPartnerInput(coupangLink || '')) {
+    return NextResponse.json(
+      { error: '쿠팡 파트너스 링크 또는 iframe HTML만 입력할 수 있습니다.' },
+      { status: 400 }
+    )
+  }
 
   // Step 1: 파일 기반 시스템 지침 로드
   const systemInstruction = await getSystemInstruction();
 
   // Step 2: 지식 파일 컨텍스트 로드
-  const knowledgeContext = await getAllKnowledgeContext();
+  const knowledgeContext = await getRelevantKnowledgeContext(
+    [prompt, keywords?.join(' '), draftOutline].filter(Boolean).join('\n')
+  );
 
   // Step 3: 프롬프트 조합
   let userPrompt = generateContentPrompt(prompt, keywords, draftOutline);
 
   // 쿠팡 링크가 있으면 쿠팡 프롬프트 추가
-  if (coupangLink && coupangLink.trim()) {
-    userPrompt += '\n' + generateCoupangPrompt(coupangLink);
+  if (hasCoupangInput) {
+    userPrompt += '\n' + generateCoupangPrompt(coupangLink || '');
   }
 
   const fullPrompt = `${systemInstruction}\n\n------\n\n${knowledgeContext}**EXECUTE TASK:**\n\n${userPrompt}`;
@@ -95,10 +112,20 @@ async function generateContentHandler(request: NextRequest) {
   }
 
   // Step 5b: 쿠팡 면책 문구 강제 삽입 (AI가 빠뜨릴 경우 안전장치)
-  if (coupangLink && coupangLink.trim() && parsedContent.content) {
-    const disclaimerText = '쿠팡 파트너스 활동의 일환';
-    if (!parsedContent.content.includes(disclaimerText)) {
-      parsedContent.content = parsedContent.content + COUPANG_DISCLAIMER;
+  if (hasCoupangInput && parsedContent.content) {
+    if (coupangEmbed && !parsedContent.content.includes('<iframe')) {
+      parsedContent.content = parsedContent.content + `\n\n${coupangEmbed}\n`
+    } else if (normalizedCoupangUrl && !parsedContent.content.includes(normalizedCoupangUrl)) {
+      parsedContent.content = parsedContent.content + `\n\n[쿠팡에서 상품 보기](${normalizedCoupangUrl})\n`
+    }
+
+    if (!parsedContent.content.includes(COUPANG_DISCLAIMER_TEXT)) {
+      parsedContent.content = parsedContent.content + COUPANG_DISCLAIMER_MARKDOWN;
+    }
+
+    const tags = Array.isArray(parsedContent.tags) ? parsedContent.tags : []
+    if (!tags.some((tag: string) => tag.includes('쿠팡'))) {
+      parsedContent.tags = [...tags, '쿠팡파트너스']
     }
   }
 

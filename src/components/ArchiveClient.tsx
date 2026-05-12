@@ -6,6 +6,7 @@ interface Post {
   title: string
   excerpt: string | null
   publishedAt: string | null
+  tags?: string
 }
 
 interface ArchiveClientProps {
@@ -38,6 +39,11 @@ export default function ArchiveClient({ posts, locale }: ArchiveClientProps) {
                   <div className="flex-1">
                     <h2 className="text-lg font-medium text-gray-900 hover:text-gray-700 mb-1">
                       {post.title}
+                      {(post.tags || '').includes('쿠팡') && (
+                        <span className="ml-2 align-middle rounded bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-700 ring-1 ring-orange-600/20">
+                          쿠팡 파트너스
+                        </span>
+                      )}
                     </h2>
                     {post.excerpt && (
                       <p className="text-sm text-gray-600 line-clamp-2">

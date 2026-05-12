@@ -193,17 +193,20 @@ export default function PostEditor({ initialData, onSubmit, isEdit = false }: Po
 
           <div>
             <label htmlFor="coupang-link" className="block text-sm font-medium text-gray-700">
-              쿠팡 파트너스 링크 (선택)
+              쿠팡 파트너스 링크 또는 HTML (선택)
             </label>
-            <input
-              type="text"
+            <textarea
               id="coupang-link"
-              placeholder="예: https://link.coupang.com/..."
+              rows={3}
+              placeholder={'예: https://coupa.ng/xxxx 또는 <iframe src="https://coupa.ng/xxxx" width="120" height="240" ...></iframe>'}
               value={coupangLink}
               onChange={(e) => setCoupangLink(e.target.value)}
               disabled={generationStatus === 'generating'}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
             />
+            <p className="mt-1 text-xs text-gray-500">
+              입력하면 상품 리뷰형 글로 생성되고, 글 마지막에 쿠팡 파트너스 고지문이 자동으로 추가됩니다.
+            </p>
           </div>
 
           <button

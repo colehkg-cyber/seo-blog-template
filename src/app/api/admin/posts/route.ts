@@ -30,6 +30,7 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         coverImage: true,
         views: true,
+        tags: true,
       }
     })
 

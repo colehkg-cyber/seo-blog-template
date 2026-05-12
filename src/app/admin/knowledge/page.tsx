@@ -7,6 +7,7 @@ interface KnowledgeFile {
   size: number
   updatedAt: string
   preview: string
+  archived?: boolean
 }
 
 type TabType = 'system-instruction' | 'knowledge-files'
@@ -89,7 +90,7 @@ export default function KnowledgePage() {
     fetchFiles()
   }, [])
 
-  // 파일 업로드 (PDF/TXT/MD)
+  // 파일 업로드 (PDF/TXT)
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const uploadFiles = e.target.files
     if (!uploadFiles) return
@@ -105,22 +106,21 @@ export default function KnowledgePage() {
         continue
       }
 
-      if (ext === 'pdf') {
-        // PDF는 FormData로 전송
-        const formData = new FormData()
-        formData.append('file', file)
-        await fetch('/api/admin/knowledge', {
-          method: 'POST',
-          body: formData,
-        })
-      } else if (ext === 'md' || ext === 'txt') {
-        // MD/TXT는 JSON으로 전송
-        const content = await file.text()
-        await fetch('/api/admin/knowledge', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ filename: file.name, content }),
-        })
+      if (ext !== 'pdf' && ext !== 'txt') {
+        alert(`"${file.name}" 파일은 업로드할 수 없습니다. PDF 또는 TXT 파일만 지원합니다.`)
+        continue
+      }
+
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/admin/knowledge', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        alert(data.error || `"${file.name}" 업로드에 실패했습니다.`)
       }
     }
     setUploading(false)
@@ -271,7 +271,7 @@ export default function KnowledgePage() {
                 {uploading ? '업로드 중...' : '파일 업로드'}
                 <input
                   type="file"
-                  accept=".md,.txt,.pdf"
+                  accept=".txt,.pdf"
                   multiple
                   onChange={handleFileUpload}
                   className="hidden"
@@ -294,7 +294,7 @@ export default function KnowledgePage() {
               </button>
             </div>
             <p className="mt-2 text-sm text-gray-500">
-              .md, .txt, .pdf 파일을 업로드하세요 (5MB 제한). PDF는 텍스트를 추출하여 마크다운으로 변환됩니다.
+              .txt, .pdf 파일만 업로드할 수 있습니다 (5MB 제한). 업로드된 파일은 지식 자료로 아카이빙되어 다음 AI 글 생성부터 참고됩니다.
             </p>
           </div>
 
@@ -362,6 +362,11 @@ export default function KnowledgePage() {
                         </svg>
                         <span className="font-medium text-gray-900 truncate">{file.name}</span>
                         <span className="text-xs text-gray-400">{(file.size / 1024).toFixed(1)}KB</span>
+                        {file.archived && (
+                          <span className="rounded bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 ring-1 ring-green-600/20">
+                            학습됨
+                          </span>
+                        )}
                       </div>
                       {file.preview && (
                         <p className="mt-1 text-sm text-gray-500 truncate pl-7">{file.preview}</p>
@@ -396,7 +401,7 @@ export default function KnowledgePage() {
               <li>본인의 업종 전문 용어와 개념을 정리하세요.</li>
               <li>직접 경험한 사례나 데이터를 포함하면 AI가 더 좋은 글을 작성합니다.</li>
               <li>독서 노트, 강의 요약, 업계 트렌드 등도 좋은 소재입니다.</li>
-              <li>PDF 파일을 업로드하면 텍스트를 추출하여 마크다운으로 자동 변환합니다.</li>
+              <li>PDF 파일을 업로드하면 텍스트를 추출하여 지식 자료로 자동 아카이빙합니다.</li>
               <li>파일은 여러 개로 나눠서 주제별로 관리하는 것을 추천합니다.</li>
               <li>업로드된 파일은 <code className="bg-blue-100 px-1 rounded">knowledge/</code> 폴더에 저장됩니다.</li>
             </ul>
