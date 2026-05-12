@@ -1,6 +1,19 @@
 import { PrismaClient } from '@prisma/client'
+import { PrismaLibSQL } from '@prisma/adapter-libsql'
 
-const prisma = new PrismaClient()
+function createPrismaClient(): PrismaClient {
+  const tursoUrl = process.env.TURSO_DATABASE_URL
+  if (tursoUrl) {
+    const adapter = new PrismaLibSQL({
+      url: tursoUrl,
+      authToken: process.env.DATABASE_AUTH_TOKEN || '',
+    })
+    return new PrismaClient({ adapter })
+  }
+  return new PrismaClient()
+}
+
+const prisma = createPrismaClient()
 
 const dummyPosts = [
   {
