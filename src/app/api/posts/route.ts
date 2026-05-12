@@ -30,6 +30,20 @@ export const GET = withErrorHandler(async (request: NextRequest) => {
 export const POST = withErrorHandler(async (request: NextRequest) => {
   const data = await validateRequest(request, createPostSchema);
 
+  // Auto-generate slug from title if not provided
+  if (!data.slug) {
+    const baseSlug = data.title
+      .toLowerCase()
+      .replace(/[^\w\s\uAC00-\uD7A3-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .trim() || `post-${Date.now()}`
+
+    // Ensure uniqueness by appending timestamp if needed
+    const existing = await prisma.post.findUnique({ where: { slug: baseSlug } })
+    data.slug = existing ? `${baseSlug}-${Date.now()}` : baseSlug
+  }
+
   logger.info('Creating post', {
     title: data.title,
     slug: data.slug,

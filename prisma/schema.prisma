@@ -112,6 +112,20 @@ model Setting {
   updatedAt DateTime @updatedAt
 }
 
+// 키워드 관리 (CSV 업로드 + AI 글쓰기 연동)
+model Keyword {
+  id         String   @id @default(cuid())
+  text       String
+  category   String?
+  usageCount Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([text])
+  @@index([category])
+  @@index([usageCount])
+}
+
 // 쿠팡 파트너스 제휴 상품
 model AffiliateProduct {
   id          String                 @id @default(cuid())

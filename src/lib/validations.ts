@@ -31,7 +31,7 @@ export const tagsSchema = z
 // Post 검증 스키마
 export const createPostSchema = z.object({
   title: z.string().min(1, 'Title is required').max(200, 'Title too long'),
-  slug: slugSchema,
+  slug: slugSchema.optional(),
   content: z.string().min(1, 'Content is required'),
   excerpt: z.string().max(500, 'Excerpt too long').optional(),
   coverImage: z.string().url('Invalid image URL').or(z.literal('')).optional(),

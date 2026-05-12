@@ -22,6 +22,9 @@ export default function AdminLayout({
               <a href="/admin/knowledge" className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md whitespace-nowrap">
                 전문 지식
               </a>
+              <a href="/admin/keywords" className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md whitespace-nowrap">
+                키워드
+              </a>
 
               {/* 구분선 */}
               <div className="w-px h-6 bg-gray-200 mx-1" />
