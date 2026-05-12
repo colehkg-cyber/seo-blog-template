@@ -1,39 +1,25 @@
-// SEO 블로그 템플릿 - 범용 콘텐츠 프롬프트
-export const MASTER_SYSTEM_PROMPT = `
+import { promises as fs } from 'fs'
+import path from 'path'
+
+const KNOWLEDGE_DIR = path.join(process.cwd(), 'knowledge')
+const SYSTEM_INSTRUCTION_FILE = 'system-instruction.md'
+
+// 폴백 시스템 프롬프트 (파일 읽기 실패 시)
+const FALLBACK_SYSTEM_PROMPT = `
 ROLE & GOAL: 당신은 전문 블로그 콘텐츠 작성자입니다.
 목표는 사용자가 선택한 주제에 대해 정확하고 실용적인 정보를 독자가 이해하기 쉽게 전달하는 것입니다.
-
-페르소나:
-- 해당 분야에 대한 깊은 이해를 가진 전문 작성자 관점
-- 독자 입장에서 솔직하고 객관적인 정보 제공
-- 어려운 전문 용어를 쉽게 풀어 설명
-- 특정 브랜드나 제품을 편향적으로 홍보하지 않는 중립적 입장
-
-콘텐츠 원칙:
-1. 정확성: 주제와 관련된 정보를 사실에 기반하여 정확하게 설명
-2. 실용성: 독자가 바로 적용할 수 있는 실질적인 정보 제공
-3. 객관성: 장단점을 균형있게 서술, 특정 상품이나 서비스 편향 금지
-4. 신뢰성: 공신력 있는 출처와 검증된 데이터 기반
 
 글쓰기 스타일:
 - 한국어로 작성
 - 존댓말 사용 (합쇼체)
 - 전문적이되 친근한 톤
 - 구체적인 숫자와 사례를 활용
-- 독자의 실생활 상황에 맞는 예시 포함
 
 SEO 규칙:
 1. 검색 의도에 맞는 제목 (60자 이내)
 2. 메타 설명 (160자 이내)
 3. H2/H3 계층 구조
 4. 키워드 자연스럽게 3-5회 포함
-5. 내부 링크 가능한 관련 주제 언급
-
-금지 사항:
-- 확인되지 않은 정보를 사실처럼 단정
-- 의료/법률 조언으로 해석될 수 있는 표현
-- 과장 광고성 표현
-- 특정 브랜드를 근거 없이 추천하거나 비하
 
 OUTPUT FORMAT (JSON):
 {
@@ -47,11 +33,84 @@ OUTPUT FORMAT (JSON):
 }
 `
 
-export function generateContentPrompt(userInput: string, keywords?: string[]) {
+/**
+ * knowledge/system-instruction.md 에서 시스템 지침을 읽어옵니다.
+ * 파일이 없으면 폴백 프롬프트를 반환합니다.
+ */
+export async function getSystemInstruction(): Promise<string> {
+  try {
+    const filePath = path.join(KNOWLEDGE_DIR, SYSTEM_INSTRUCTION_FILE)
+    const content = await fs.readFile(filePath, 'utf-8')
+    return content
+  } catch {
+    console.warn('system-instruction.md를 읽을 수 없습니다. 폴백 프롬프트를 사용합니다.')
+    return FALLBACK_SYSTEM_PROMPT
+  }
+}
+
+/**
+ * knowledge/ 디렉토리의 모든 지식 파일(.md, .txt)을 읽어 컨텍스트 문자열로 반환합니다.
+ * system-instruction.md는 제외합니다.
+ * 파일당 3000자 제한 (토큰 폭발 방지)
+ */
+export async function getAllKnowledgeContext(): Promise<string> {
+  try {
+    await fs.mkdir(KNOWLEDGE_DIR, { recursive: true })
+    const entries = await fs.readdir(KNOWLEDGE_DIR, { withFileTypes: true })
+
+    const knowledgeFiles = entries.filter(
+      (e) =>
+        e.isFile() &&
+        (e.name.endsWith('.md') || e.name.endsWith('.txt')) &&
+        e.name !== SYSTEM_INSTRUCTION_FILE
+    )
+
+    if (knowledgeFiles.length === 0) return ''
+
+    const MAX_CHARS_PER_FILE = 3000
+    const chunks: string[] = []
+
+    for (const file of knowledgeFiles) {
+      try {
+        const filePath = path.join(KNOWLEDGE_DIR, file.name)
+        let content = await fs.readFile(filePath, 'utf-8')
+        if (content.length > MAX_CHARS_PER_FILE) {
+          content = content.substring(0, MAX_CHARS_PER_FILE) + '\n...(truncated)'
+        }
+        chunks.push(`[지식 파일: ${file.name}]\n${content}`)
+      } catch {
+        // 개별 파일 읽기 실패는 무시
+      }
+    }
+
+    if (chunks.length === 0) return ''
+
+    return (
+      '\n\n**참고 지식 (Knowledge Context):**\n' +
+      chunks.join('\n\n---\n\n') +
+      '\n\n**위 지식을 참고하여 전문성을 반영해 글을 작성해주세요.**\n\n'
+    )
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * 사용자 입력으로부터 AI 콘텐츠 생성 프롬프트를 만듭니다.
+ */
+export function generateContentPrompt(
+  userInput: string,
+  keywords?: string[],
+  draftOutline?: string
+): string {
   let prompt = `다음 주제로 블로그 글을 작성해주세요: ${userInput}\n`
 
   if (keywords && keywords.length > 0) {
     prompt += `타겟 키워드: ${keywords.join(', ')}\n`
+  }
+
+  if (draftOutline && draftOutline.trim()) {
+    prompt += `\n초안/개요:\n${draftOutline}\n\n위 초안을 참고하여 완성된 글을 작성해주세요.\n`
   }
 
   prompt += `
@@ -67,3 +126,23 @@ export function generateContentPrompt(userInput: string, keywords?: string[]) {
 
   return prompt
 }
+
+/**
+ * 쿠팡 파트너스 상품 리뷰 모드 프롬프트
+ */
+export function generateCoupangPrompt(coupangLink: string): string {
+  return `
+**쿠팡 파트너스 상품 리뷰 모드:**
+- 아래 쿠팡 상품 링크를 본문 중간에 자연스럽게 삽입해주세요.
+- 상품 링크: ${coupangLink}
+- 링크 형식: [상품명 또는 관련 텍스트](${coupangLink})
+- 상품에 대한 객관적 정보와 실제 사용 관점의 리뷰를 포함하세요.
+- 과장 광고 금지, 장단점을 균형 있게 서술하세요.
+
+**필수 면책 문구 (반드시 글 마지막에 포함):**
+> 이 포스팅은 쿠팡 파트너스 활동의 일환으로, 이에 따른 일정액의 수수료를 제공받습니다.
+`
+}
+
+// 하위 호환성을 위한 re-export
+export const MASTER_SYSTEM_PROMPT = FALLBACK_SYSTEM_PROMPT

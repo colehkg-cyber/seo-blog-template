@@ -45,9 +45,11 @@ export const updatePostSchema = createPostSchema.partial();
 
 // AI 생성 검증 스키마
 export const generateContentSchema = z.object({
-  prompt: z.string().min(10, 'Prompt too short').max(1000, 'Prompt too long'),
+  prompt: z.string().min(5, 'Prompt too short').max(1000, 'Prompt too long'),
   keywords: z.array(z.string()).max(20, 'Too many keywords').optional(),
   publishDate: z.string().datetime().optional(),
+  draftOutline: z.string().max(5000).optional(),
+  coupangLink: z.string().max(2000).optional(),
 });
 
 // 파일 업로드 검증

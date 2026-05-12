@@ -33,6 +33,9 @@ export const env = {
   // Site Configuration
   NEXT_PUBLIC_SITE_URL: getOptionalEnv('NEXT_PUBLIC_SITE_URL', 'http://localhost:3000'),
 
+  // Unsplash (선택 — 자동 썸네일용)
+  UNSPLASH_ACCESS_KEY: getOptionalEnv('UNSPLASH_ACCESS_KEY'),
+
   // Cron & Webhooks (선택)
   CRON_SECRET: getOptionalEnv('CRON_SECRET'),
   REDEPLOY_WEBHOOK_URL: getOptionalEnv('REDEPLOY_WEBHOOK_URL'),

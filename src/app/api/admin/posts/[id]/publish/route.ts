@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { withErrorHandler, logger, ApiError } from '@/lib/error-handler'
 import { verifyAdminAuth } from '@/lib/auth'
+import { searchUnsplashImage, extractImageKeywords, getOptimizedImageUrl } from '@/lib/unsplash'
 
 /**
  * POST /api/admin/posts/[id]/publish
@@ -19,7 +20,7 @@ async function publishHandler(
   // Check if post exists and is a draft
   const existingPost = await prisma.post.findUnique({
     where: { id },
-    select: { status: true, title: true }
+    select: { status: true, title: true, coverImage: true }
   })
 
   if (!existingPost) {
@@ -35,19 +36,35 @@ async function publishHandler(
     })
   }
 
+  // Unsplash 자동 썸네일: coverImage가 없거나 OG URL이면 Unsplash에서 검색
+  let coverImage = existingPost.coverImage
+  const needsThumbnail = !coverImage || coverImage.includes('/api/og?')
+
+  if (needsThumbnail && existingPost.title) {
+    logger.info('Searching Unsplash for thumbnail', { title: existingPost.title })
+    const query = extractImageKeywords(existingPost.title)
+    const image = await searchUnsplashImage(query)
+    if (image) {
+      coverImage = getOptimizedImageUrl(image)
+      logger.info('Unsplash thumbnail assigned', { imageId: image.id })
+    }
+  }
+
   // Update post status to PUBLISHED and set publishedAt
   const post = await prisma.post.update({
     where: { id },
     data: {
       status: 'PUBLISHED',
       publishedAt: new Date(),
+      ...(coverImage !== existingPost.coverImage ? { coverImage } : {}),
     },
   })
 
   logger.info('Post published successfully', {
     postId: id,
     title: existingPost.title,
-    publishedAt: post.publishedAt
+    publishedAt: post.publishedAt,
+    unsplashThumbnail: coverImage !== existingPost.coverImage,
   })
 
   return NextResponse.json({
@@ -66,7 +83,7 @@ export async function POST(
   request: NextRequest,
   context: { params: Promise<{ id: string }> }
 ) {
-  // 🔒 인증 체크
+  // 인증 체크
   if (!verifyAdminAuth(request)) {
     return NextResponse.json(
       { error: 'Unauthorized - Admin access required' },
