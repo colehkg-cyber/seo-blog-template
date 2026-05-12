@@ -114,7 +114,7 @@ export default async function HomePage({
               {brandConfig.logo.image ? (
                 <img src={brandConfig.logo.image} alt={brandConfig.logo.text} className="h-6 w-auto" />
               ) : (
-                <h1 className="text-2xl font-bold text-gray-900">{brandConfig.logo.text}</h1>
+                <h1 className="logo-text">{brandConfig.logo.text}</h1>
               )}
             </a>
           </div>

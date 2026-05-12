@@ -1,10 +1,10 @@
 {
-  "name": "colemearchy-blog",
+  "name": "seo-blog-template",
   "version": "0.1.0",
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && next build && next-sitemap",
+    "build": "tsx scripts/preflight-check.ts && prisma generate && next build && next-sitemap",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
@@ -14,15 +14,7 @@
     "test:coverage": "vitest run --coverage",
     "db:push": "prisma db push",
     "db:generate": "prisma generate",
-    "db:cleanup-duplicates": "tsx src/scripts/cleanupDuplicates.ts",
-    "backup:all": "tsx src/lib/auto-backup.ts backup-all",
-    "backup:post": "tsx src/lib/auto-backup.ts backup-post",
-    "backup:list": "tsx src/lib/auto-backup.ts list",
-    "backup:status": "tsx src/lib/auto-backup.ts status",
-    "backup:cleanup": "tsx src/lib/auto-backup.ts cleanup",
-    "backup:restore": "tsx src/lib/auto-backup.ts restore",
-    "backup:daily": "tsx scripts/daily-backup.ts",
-    "youtube:sync": "tsx scripts/auto-youtube-sync.ts",
+    "db:seed": "tsx prisma/seed.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

@@ -7,14 +7,13 @@ import { env } from '@/lib/env';
 import { withErrorHandler, logger, ApiError, createSuccessResponse, validateRequest } from '@/lib/error-handler';
 import { generateContentSchema } from '@/lib/validations';
 import { generateSlug, generateUniqueSlugWithTimestamp } from '@/lib/utils/slug';
-import { detectLanguage } from '@/lib/translation';
 import { autoGenerateThumbnailUrl } from '@/lib/utils/thumbnail';
 import { tagsToArray, tagsToString } from '@/lib/utils/tags'
 import { unwrapContent } from '@/lib/utils/content'
 import { checkGeminiRateLimit, createRateLimitResponse } from '@/lib/rate-limit';
 import { verifyAdminAuth } from '@/lib/auth';
 
-const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
+const genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY || '');
 
 // Generate embedding for a text
 async function generateEmbedding(text: string): Promise<number[]> {
@@ -45,7 +44,7 @@ async function searchSimilarKnowledge(queryEmbedding: number[], limit: number = 
 async function generateContentHandler(request: NextRequest) {
   // Validate input data
   const validatedData = await validateRequest(request, generateContentSchema);
-  const { prompt, keywords, affiliateProducts, publishDate } = validatedData;
+  const { prompt, keywords, publishDate } = validatedData;
 
   logger.info('Generating content', {
     promptLength: prompt.length,
@@ -73,7 +72,7 @@ async function generateContentHandler(request: NextRequest) {
 
     // Step 4: Generate content with RAG context and existing posts
     logger.info('Starting Gemini content generation');
-    const fullPrompt = `${MASTER_SYSTEM_PROMPT}\n\n------\n\n${existingPostsContext}${ragContext}**EXECUTE TASK:**\n\n${generateContentPrompt(prompt, keywords, affiliateProducts)}`;
+    const fullPrompt = `${MASTER_SYSTEM_PROMPT}\n\n------\n\n${existingPostsContext}${ragContext}**EXECUTE TASK:**\n\n${generateContentPrompt(prompt, keywords)}`;
 
     const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash-lite" });
     logger.info('Calling Gemini API');
@@ -134,14 +133,6 @@ async function generateContentHandler(request: NextRequest) {
     // Generate unique slug with timestamp (Turso compatibility)
     const slug = generateUniqueSlugWithTimestamp(parsedContent.title || prompt);
 
-    // Auto-detect language from generated content
-    const detectedLanguage = detectLanguage(
-      (parsedContent.title || prompt) + ' ' + (parsedContent.content || responseText).substring(0, 500)
-    );
-    logger.info('Language detected for AI-generated content', {
-      language: detectedLanguage,
-      title: parsedContent.title || prompt
-    });
 
     // Auto-generate thumbnail URL if no coverImage provided
     const postTitle = parsedContent.title || prompt;
@@ -172,8 +163,8 @@ async function generateContentHandler(request: NextRequest) {
         coverImage: coverImageUrl,
         status: 'DRAFT',
         scheduledAt,
-        author: 'Colemearchy AI',
-        originalLanguage: detectedLanguage
+        author: 'AI',
+        originalLanguage: 'ko'
       }
     });
 

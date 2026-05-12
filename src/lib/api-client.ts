@@ -1,8 +1,7 @@
-import { 
-  Post, 
-  CreatePostData, 
-  UpdatePostData, 
-  YouTubeVideo,
+import {
+  Post,
+  CreatePostData,
+  UpdatePostData,
   GenerateContentRequest,
   GenerateContentResponse,
   PaginationParams,
@@ -89,15 +88,6 @@ class ApiClient {
       this.request<{ success: boolean }>(`/api/posts/${id}`, {
         method: 'DELETE',
       }),
-  }
-
-  // YouTube API
-  youtube = {
-    listVideos: (limit = 10) =>
-      this.request<YouTubeVideo[]>(`/api/youtube/videos?limit=${limit}`),
-
-    getVideo: (videoId: string) =>
-      this.request<YouTubeVideo>(`/api/youtube/videos/${videoId}`),
   }
 
   // AI Generation API

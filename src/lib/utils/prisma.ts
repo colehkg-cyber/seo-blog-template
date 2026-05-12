@@ -1,5 +1,8 @@
 import { Prisma } from '@prisma/client'
-import { PostWhereInput, PostOrderByInput } from '@/types/prisma'
+
+// Prisma type aliases
+type PostWhereInput = Prisma.PostWhereInput
+type PostOrderByInput = Prisma.PostOrderByWithRelationInput
 
 /**
  * Prisma 쿼리 헬퍼 함수

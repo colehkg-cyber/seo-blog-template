@@ -193,7 +193,7 @@ export function optimizeUnsplashUrl(url: string): string {
  * 이미지 attribution (저작권 표시)
  */
 export function getImageAttribution(image: UnsplashImage): string {
-  return `Photo by <a href="${image.links.html}?utm_source=intalk_blog&utm_medium=referral">${image.user.name}</a> on <a href="https://unsplash.com?utm_source=intalk_blog&utm_medium=referral">Unsplash</a>`
+  return `Photo by <a href="${image.links.html}?utm_source=seo_blog_template&utm_medium=referral">${image.user.name}</a> on <a href="https://unsplash.com?utm_source=seo_blog_template&utm_medium=referral">Unsplash</a>`
 }
 
 /**

@@ -9,23 +9,38 @@ export default function AdminLayout({
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between h-16">
             <div className="flex items-center">
-              <h1 className="text-xl font-semibold">Admin Dashboard</h1>
-            </div>
-            <div className="flex items-center gap-4">
-              <a href="/admin" className="text-gray-700 hover:text-gray-900">Posts</a>
-              <a href="/admin/analytics" className="text-gray-700 hover:text-gray-900">Analytics</a>
-              <a href="/admin/youtube" className="text-gray-700 hover:text-gray-900">YouTube</a>
-              <a href="/admin/threads" className="text-gray-700 hover:text-gray-900">Threads</a>
-              <a 
-                href="/api/download/desktop-app" 
-                className="inline-flex items-center gap-2 text-gray-700 hover:text-gray-900 border border-gray-300 px-3 py-2 rounded-md hover:bg-gray-50"
-              >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Desktop App
+              <a href="/admin" className="text-xl font-semibold text-gray-900 hover:text-gray-700">
+                Admin
               </a>
-              <a href="/admin/new" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700">New Post</a>
+            </div>
+            <div className="flex items-center gap-1 overflow-x-auto">
+              {/* Admin1: 밀키트 커스텀 */}
+              <span className="text-xs text-gray-400 px-2 hidden sm:inline">커스텀</span>
+              <a href="/admin/setup" className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md whitespace-nowrap">
+                설정 가이드
+              </a>
+              <a href="/admin/knowledge" className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md whitespace-nowrap">
+                전문 지식
+              </a>
+
+              {/* 구분선 */}
+              <div className="w-px h-6 bg-gray-200 mx-1" />
+
+              {/* Admin2: 콘텐츠 관리 (CMS) */}
+              <span className="text-xs text-gray-400 px-2 hidden sm:inline">CMS</span>
+              <a href="/admin" className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md whitespace-nowrap">
+                글 관리
+              </a>
+              <a href="/admin/analytics" className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md whitespace-nowrap">
+                통계
+              </a>
+
+              {/* 구분선 */}
+              <div className="w-px h-6 bg-gray-200 mx-1" />
+
+              <a href="/admin/new" className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm whitespace-nowrap">
+                새 글 작성
+              </a>
             </div>
           </div>
         </div>

@@ -5,6 +5,11 @@
   :root {
     --background: #ffffff;
     --foreground: #171717;
+    /* 로고 텍스트 커스터마이징 변수 */
+    --logo-font-size: 1.5rem;
+    --logo-font-weight: 700;
+    --logo-color: #171717;
+    --logo-letter-spacing: -0.03em;
   }
 }
 
@@ -74,6 +79,16 @@ a, button {
 ::selection {
   background: #f0f0f0;
   color: #000;
+}
+
+/* Logo text style - CSS 변수로 커스터마이징 가능 */
+.logo-text {
+  font-size: var(--logo-font-size);
+  font-weight: var(--logo-font-weight);
+  color: var(--logo-color);
+  letter-spacing: var(--logo-letter-spacing);
+  line-height: 1.2;
+  text-decoration: none;
 }
 
 /* Markdown Styles - Custom Prose */

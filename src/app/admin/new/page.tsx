@@ -13,7 +13,6 @@ interface PostFormData {
   seoTitle?: string
   seoDescription?: string
   publishedAt?: string | null
-  youtubeVideoId?: string | null
 }
 
 export default function NewPostPage() {
@@ -33,7 +32,7 @@ export default function NewPostPage() {
 
   return (
     <div>
-      <h1 className="text-2xl font-semibold text-gray-900 mb-6">Create New Post</h1>
+      <h1 className="text-2xl font-semibold text-gray-900 mb-6">새 글 작성</h1>
       <PostEditor onSubmit={handleSubmit} />
     </div>
   )

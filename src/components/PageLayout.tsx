@@ -18,7 +18,7 @@ export default function PageLayout({ locale, currentPath, children }: PageLayout
               {brandConfig.logo.image ? (
                 <img src={brandConfig.logo.image} alt={brandConfig.logo.text} className="h-6 w-auto" />
               ) : (
-                <span className="text-3xl font-serif italic">{brandConfig.logo.text}</span>
+                <span className="logo-text">{brandConfig.logo.text}</span>
               )}
             </a>
           </div>

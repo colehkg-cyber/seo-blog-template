@@ -9,11 +9,11 @@ export const brandConfig = {
   /** 로고 설정 */
   logo: {
     /** 텍스트 로고 (이미지가 없을 때 사용) */
-    text: 'InTalk',
+    text: '나의 블로그',
     /** 이미지 로고 경로 (public/ 기준). null이면 텍스트 로고 사용 */
-    image: '/images/intalk-logo.svg',
+    image: null as string | null,
     /** 로고 클릭 시 이동할 외부 URL. null이면 블로그 홈으로 이동 */
-    url: 'https://www.intalkpartners.com/',
+    url: null as string | null,
   },
 
   /** 기본 OG 이미지 (public/ 기준, 1200x630 권장) */
@@ -28,7 +28,7 @@ export const brandConfig = {
 
   /** 저작권 정보 */
   copyright: {
-    holder: '인톡파트너스',
+    holder: '나의 블로그',
     startYear: new Date().getFullYear(),
   },
 } as const

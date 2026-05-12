@@ -2,8 +2,6 @@ import { Metadata } from 'next'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Suspense } from 'react'
-import { extractYouTubeVideoId } from '@/lib/youtube-thumbnail'
-import YouTubeThumbnail from '@/components/YouTubeThumbnail'
 import { notFound } from 'next/navigation'
 import { prisma } from '@/lib/prisma'
 import { getPostBySlug } from '@/lib/optimized-queries'
@@ -12,7 +10,6 @@ import MarkdownContent from '@/components/MarkdownContent'
 import RelatedPosts from '@/components/RelatedPosts'
 import TableOfContents from '@/components/TableOfContents'
 import Breadcrumb from '@/components/Breadcrumb'
-import YouTubeEmbed from '@/components/YouTubeEmbed'
 import { calculateReadingTime, formatReadingTime } from '@/lib/reading-time'
 import ViewCounter from '@/components/ViewCounter'
 import { siteConfig, brandConfig, navigationConfig, featuresConfig } from '@/config'
@@ -164,22 +161,15 @@ export default async function PostPage({
   }
 
   // View count is now tracked client-side via ViewCounter component
-  
-  // Use translated content if available
-  const translation = post.translations?.find(t => t.locale === lang)
-  const displayTitle = lang === 'en' && translation?.title ? translation.title : post.title
-  const displayContent = lang === 'en' && translation?.content ? translation.content : post.content
-  const displayExcerpt = lang === 'en' && translation?.excerpt ? translation.excerpt : post.excerpt
-  
-  // Unwrap JSON-wrapped content and remove YouTube boilerplate
-  let content = unwrapContent(displayContent)
-  content = content.replace(/\n*---\n+### Watch the Video\n+This post is based on our YouTube video\. Watch it for more details!\n+---\n+\*Originally published on YouTube:[^*]*\*/g, '')
-  content = content.replace(/### Watch the Video[\s\S]*?Watch it for more details!/g, '')
-  content = content.replace(/\*Originally published on YouTube:[^*]*\*/g, '')
+
+  const displayTitle = post.title
+  const displayExcerpt = post.excerpt
+
+  // Unwrap JSON-wrapped content
+  let content = unwrapContent(post.content)
   
   // Calculate reading time
   const readingTime = calculateReadingTime(content)
-  const youtubeVideoId = extractYouTubeVideoId(post.youtubeVideoId || '')
   
   const jsonLd = {
     '@context': 'https://schema.org',
@@ -321,23 +311,6 @@ export default async function PostPage({
             <div className="relative w-full max-w-4xl mb-6 rounded-lg overflow-hidden bg-gray-100">
               <div className="relative aspect-[16/9] w-full">
                 {(() => {
-                  const isYouTubeThumbnail = post.coverImage.includes('ytimg.com') || post.coverImage.includes('img.youtube.com')
-                  const youtubeVideoIdMatch = post.coverImage.match(/\/vi\/([a-zA-Z0-9_-]{11})\//)
-                  const youtubeVideoId = youtubeVideoIdMatch ? youtubeVideoIdMatch[1] : null
-
-                  if (isYouTubeThumbnail && youtubeVideoId) {
-                    return (
-                      <YouTubeThumbnail
-                        videoId={youtubeVideoId}
-                        alt={displayTitle}
-                        fill
-                        className="object-contain bg-gray-100"
-                        priority
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
-                      />
-                    )
-                  }
-
                   // Unsplash: optimize URL for auto-format (AVIF/WebP) + smaller size
                   if (post.coverImage.includes('images.unsplash.com')) {
                     const optimizedSrc = optimizeUnsplashUrl(post.coverImage)
@@ -354,7 +327,7 @@ export default async function PostPage({
                     )
                   }
 
-                  // Use conditional rendering based on image source to avoid 402 Payment Required errors
+                  // Use conditional rendering based on image source
                   if (shouldUseNextImage(post.coverImage)) {
                     return (
                       <Image
@@ -380,13 +353,6 @@ export default async function PostPage({
                 })()}
               </div>
             </div>
-          )}
-          
-          {post.youtubeVideoId && (
-            <YouTubeEmbed
-              videoId={post.youtubeVideoId}
-              title={post.title}
-            />
           )}
 
               <MarkdownContent content={content} />

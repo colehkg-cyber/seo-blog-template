@@ -31,19 +31,7 @@ export const getPostBySlug = unstable_cache(
           seoDescription: true,
           views: true,
           status: true,
-          youtubeVideoId: true,
           originalLanguage: true,
-          translations: {
-            select: {
-              id: true,
-              locale: true,
-              title: true,
-              content: true,
-              excerpt: true,
-              seoTitle: true,
-              seoDescription: true,
-            }
-          }
         }
       })
     } catch (error) {

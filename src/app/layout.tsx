@@ -33,7 +33,7 @@ export const metadata: Metadata = {
     template: `%s | ${siteConfig.shortName}`
   },
   description: siteConfig.description[siteConfig.defaultLocale],
-  keywords: siteConfig.keywords,
+  keywords: [...siteConfig.keywords],
   authors: [{ name: siteConfig.author.name }],
   creator: siteConfig.author.name,
   publisher: siteConfig.author.name,

@@ -1,20 +1,15 @@
 import Link from 'next/link'
-import { BulkImageUrlUploader } from '@/components/admin/BulkImageUrlUploader'
-import { BulkImageUploader } from '@/components/admin/BulkImageUploader'
 import { AdminPostsTable } from '@/components/admin/AdminPostsTable'
-import NeedsThumbnailPosts from '@/components/admin/NeedsThumbnailPosts'
 
 export const dynamic = 'force-dynamic'
 
 export default function AdminPage() {
-  // AdminPostsTable 컴포넌트가 자체적으로 API를 통해 posts를 가져옴
-
   return (
     <div className="space-y-8">
       {/* 관리 도구 바로가기 */}
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">관리 도구</h2>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <Link
             href="/admin/new"
             className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
@@ -25,51 +20,28 @@ export default function AdminPage() {
             새 포스트 작성
           </Link>
           <Link
-            href="/admin/youtube"
-            className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
-          >
-            <svg className="mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
-            </svg>
-            YouTube 비디오
-          </Link>
-          <Link
-            href="/admin/youtube-sync"
-            className="flex items-center justify-center px-4 py-3 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50"
+            href="/admin/setup"
+            className="flex items-center justify-center px-4 py-3 border border-blue-300 rounded-md shadow-sm text-sm font-medium text-blue-700 bg-blue-50 hover:bg-blue-100"
           >
             <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.066 2.573c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.573 1.066c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.066-2.573c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
-            YouTube 자동 동기화
+            설정 가이드
           </Link>
           <Link
-            href="/admin/affiliate-products"
-            className="flex items-center justify-center px-4 py-3 border border-purple-300 rounded-md shadow-sm text-sm font-medium text-purple-700 bg-purple-50 hover:bg-purple-100"
+            href="/admin/knowledge"
+            className="flex items-center justify-center px-4 py-3 border border-green-300 rounded-md shadow-sm text-sm font-medium text-green-700 bg-green-50 hover:bg-green-100"
           >
             <svg className="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
             </svg>
-            쿠팡 파트너스
+            전문 지식 관리
           </Link>
         </div>
       </div>
 
-      {/* 대량 이미지 파일 업로드 섹션 */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <BulkImageUploader />
-      </div>
-
-      {/* 대량 이미지 URL 업로드 섹션 */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <BulkImageUrlUploader />
-      </div>
-
-      {/* 썸네일이 필요한 포스트 섹션 */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <NeedsThumbnailPosts />
-      </div>
-
-      {/* 게시물 목록 섹션 - Client Component로 분리 */}
+      {/* 게시물 목록 섹션 */}
       <AdminPostsTable posts={[]} />
     </div>
   )

@@ -26,13 +26,6 @@ export interface Post {
   createdAt: Date;
   updatedAt: Date;
   views: number;
-  youtubeVideoId: string | null;
-  socialLinks: SocialLinks | null;
-}
-
-export interface SocialLinks {
-  threads?: string[];
-  youtube?: string[];
 }
 
 export interface CreatePostData {
@@ -45,27 +38,9 @@ export interface CreatePostData {
   seoTitle?: string;
   seoDescription?: string;
   publishedAt?: Date | string | null;
-  youtubeVideoId?: string | null;
-  socialLinks?: SocialLinks | null;
 }
 
 export interface UpdatePostData extends Partial<CreatePostData> {}
-
-// YouTube Types
-export interface YouTubeVideo {
-  id: string;
-  title: string;
-  description: string;
-  thumbnailUrl: string;
-  publishedAt: string;
-  url: string;
-  embedUrl: string;
-}
-
-export interface YouTubeApiConfig {
-  apiKey: string;
-  channelId: string;
-}
 
 // Admin Types
 export interface AdminCredentials {
@@ -89,7 +64,6 @@ export interface AnalyticsData {
 export interface GenerateContentRequest {
   prompt: string;
   keywords?: string[];
-  affiliateProducts?: string[];
   publishDate?: string;
 }
 
@@ -147,7 +121,6 @@ export interface PostFormData {
   seoTitle: string;
   seoDescription: string;
   publishedAt: string | null;
-  youtubeVideoId: string;
 }
 
 // Error Types
