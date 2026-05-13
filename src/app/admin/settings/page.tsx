@@ -4,8 +4,10 @@ import { useState, useEffect } from 'react'
 
 export default function AdminSettingsPage() {
   const [faviconUrl, setFaviconUrl] = useState('')
+  const [logoUrl, setLogoUrl] = useState('')
   const [metaDescription, setMetaDescription] = useState('')
   const [uploading, setUploading] = useState(false)
+  const [uploadingLogo, setUploadingLogo] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
   const [unsplashKey, setUnsplashKey] = useState('')
@@ -28,6 +30,9 @@ export default function AdminSettingsPage() {
           if (data.settings.SITE_META_DESCRIPTION?.isConfigured) {
             // For meta description we want full value, not masked
             // We'll load it separately
+          }
+          if (data.settings.SITE_LOGO_URL?.isConfigured) {
+            setLogoUrl(data.settings.SITE_LOGO_URL.masked || '(설정됨)')
           }
           if (data.settings.UNSPLASH_ACCESS_KEY?.isConfigured) {
             setUnsplashConfigured(true)
@@ -75,6 +80,38 @@ export default function AdminSettingsPage() {
       setMessage('업로드 실패')
     } finally {
       setUploading(false)
+    }
+  }
+
+  async function handleLogoUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    setUploadingLogo(true)
+    setMessage('')
+
+    try {
+      const formData = new FormData()
+      formData.append('logo', file)
+
+      const res = await fetch('/api/admin/upload-logo', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        setMessage(`오류: ${data.error}`)
+        return
+      }
+
+      setLogoUrl(data.url)
+      setMessage('로고가 업로드되었습니다.')
+    } catch {
+      setMessage('업로드 실패')
+    } finally {
+      setUploadingLogo(false)
     }
   }
 
@@ -182,6 +219,43 @@ export default function AdminSettingsPage() {
               {faviconUrl && (
                 <p className="mt-2 text-xs text-gray-500 break-all max-w-md">
                   {faviconUrl}
+                </p>
+              )}
+            </div>
+          </div>
+        </section>
+
+        {/* Logo Section */}
+        <section className="mb-8 pb-8 border-b border-gray-200">
+          <h2 className="text-lg font-semibold text-gray-900 mb-2">로고</h2>
+          <p className="text-sm text-gray-500 mb-4">
+            사이트 헤더에 표시되는 로고 이미지입니다. PNG, JPEG, SVG, WebP 파일을 업로드하세요 (최대 2MB).
+          </p>
+
+          <div className="flex items-start gap-4">
+            {logoUrl && !logoUrl.startsWith('(') && (
+              <div className="flex-shrink-0">
+                <img
+                  src={logoUrl}
+                  alt="Current logo"
+                  className="h-16 max-w-[200px] rounded border border-gray-200 object-contain bg-gray-50 p-1"
+                />
+              </div>
+            )}
+            <div>
+              <label className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 cursor-pointer">
+                {uploadingLogo ? '업로드 중...' : '로고 업로드'}
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/svg+xml,image/webp"
+                  onChange={handleLogoUpload}
+                  disabled={uploadingLogo}
+                  className="hidden"
+                />
+              </label>
+              {logoUrl && (
+                <p className="mt-2 text-xs text-gray-500 break-all max-w-md">
+                  {logoUrl}
                 </p>
               )}
             </div>

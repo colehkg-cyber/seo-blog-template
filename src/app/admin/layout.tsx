@@ -34,9 +34,6 @@ export default function AdminLayout({
               <a href="/admin" className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md whitespace-nowrap">
                 글 관리
               </a>
-              <a href="/admin/analytics" className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md whitespace-nowrap">
-                통계
-              </a>
               <a href="/admin/settings" className="px-3 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-50 rounded-md whitespace-nowrap">
                 사이트 설정
               </a>
