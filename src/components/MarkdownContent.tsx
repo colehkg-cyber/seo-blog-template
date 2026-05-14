@@ -6,6 +6,7 @@ import dynamic from 'next/dynamic'
 import ReactMarkdown from 'react-markdown'
 import remarkGfm from 'remark-gfm'
 import rehypeRaw from 'rehype-raw'
+import rehypeSectionWrap from '@/lib/rehype-section-wrap'
 import LazyImage from './LazyImage'
 import type { Components } from 'react-markdown'
 import { unwrapContent, cleanMarkdownHeadings } from '@/lib/utils/content'
@@ -48,7 +49,7 @@ export default function MarkdownContent({ content: rawContent }: MarkdownContent
     <div style={{ maxWidth: '65ch', margin: '0 auto' }}>
       <ReactMarkdown 
         remarkPlugins={[[remarkGfm, { singleTilde: false }]]}
-        rehypePlugins={[rehypeRaw]}
+        rehypePlugins={[rehypeRaw, rehypeSectionWrap]}
         components={{
           h1: ({children}) => {
             const id = createHeadingId(children)

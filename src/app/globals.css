@@ -253,6 +253,31 @@ a, button {
   }
 }
 
+/* Post Section Wrappers — h2 단위로 자동 래핑됨 (rehype-section-wrap.ts)
+ * 구조: <section.post-section> > <div.post-section-container> > <div.post-section-content>
+ * 시맨틱 HTML5 sectioning content. 검색엔진 단락 인식·피처드 스니펫 추출 최적화.
+ */
+.post-section {
+  display: block;
+  scroll-margin-top: 80px; /* sticky header offset (TOC anchor 스크롤 시) */
+}
+
+.post-section + .post-section {
+  margin-top: 1.5rem; /* 섹션 간 명시적 간격 */
+}
+
+.post-section-container {
+  width: 100%;
+}
+
+.post-section-content {
+  /* 첫 자식 h2의 marginTop을 section gap에 흡수시키기 */
+}
+
+.post-section--body > .post-section-container > .post-section-content > h2:first-child {
+  margin-top: 0;
+}
+
 /* Mobile optimizations to prevent horizontal scroll */
 @layer utilities {
   /* Ensure all containers don't overflow on mobile */
