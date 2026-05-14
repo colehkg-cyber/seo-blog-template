@@ -4,7 +4,8 @@ import { prisma } from '@/lib/prisma'
 import { Metadata } from 'next'
 import { siteConfig } from '@/config'
 
-export const dynamic = 'force-dynamic'
+// ISR: hourly revalidation. Restores bfcache vs. force-dynamic.
+export const revalidate = 3600
 
 export async function generateMetadata({
   params,

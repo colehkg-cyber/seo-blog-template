@@ -1,9 +1,17 @@
 import { Metadata } from 'next'
 import Link from 'next/link'
+import { siteConfig } from '@/config'
 
 export const metadata: Metadata = {
-  title: 'How I AI - CMA Blog',
-  description: 'My approach to AI',
+  title: `How I AI | ${siteConfig.shortName}`,
+  description: `How I use AI tools to research, write, and publish content on ${siteConfig.name}. Workflow, prompts, and lessons learned.`,
+  alternates: { canonical: `${siteConfig.url}/how-i-ai` },
+  openGraph: {
+    title: `How I AI | ${siteConfig.shortName}`,
+    description: `How I use AI tools to research, write, and publish content on ${siteConfig.name}.`,
+    url: `${siteConfig.url}/how-i-ai`,
+    type: 'article',
+  },
 }
 
 export default function HowIAIPage() {

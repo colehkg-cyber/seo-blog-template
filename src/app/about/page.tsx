@@ -1,4 +1,18 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
+import { siteConfig } from '@/config'
+
+export const metadata: Metadata = {
+  title: `About | ${siteConfig.shortName}`,
+  description: `About ${siteConfig.name} — our mission, what we write about, and the people behind the blog.`,
+  alternates: { canonical: `${siteConfig.url}/about` },
+  openGraph: {
+    title: `About | ${siteConfig.shortName}`,
+    description: `About ${siteConfig.name} — our mission, what we write about, and the people behind the blog.`,
+    url: `${siteConfig.url}/about`,
+    type: 'website',
+  },
+}
 
 export default function AboutPage() {
   return (

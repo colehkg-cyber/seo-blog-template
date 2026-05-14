@@ -1,5 +1,18 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { siteConfig, brandConfig } from '@/config'
+
+export const metadata: Metadata = {
+  title: `Contact | ${siteConfig.shortName}`,
+  description: `Get in touch with ${siteConfig.name} — questions, partnerships, and collaboration opportunities.`,
+  alternates: { canonical: `${siteConfig.url}/contact` },
+  openGraph: {
+    title: `Contact | ${siteConfig.shortName}`,
+    description: `Get in touch with ${siteConfig.name}.`,
+    url: `${siteConfig.url}/contact`,
+    type: 'website',
+  },
+}
 
 export default function ContactPage() {
   return (

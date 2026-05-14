@@ -1,7 +1,6 @@
 import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
+// Static redirect; no DB access. Revalidate not needed.
 export default function PostsPage() {
   redirect('/archive')
 }

@@ -22,12 +22,10 @@ interface PostPageProps {
   params: Promise<{ slug: string; locale: string }>
 }
 
-// Temporarily use dynamic rendering to avoid DB quota issues during build
-export const dynamic = 'force-dynamic'
-// Will revert to static generation once DB quota is resolved:
-// export const dynamic = 'force-static'
-// export const dynamicParams = true
-// export const revalidate = 3600 // 1 hour ISR
+// ISR: revalidate every hour. Restores bfcache (no Cache-Control: no-store)
+// while keeping content fresh and avoiding build-time DB quota issues.
+export const revalidate = 3600
+export const dynamicParams = true
 
 // Temporarily disabled to avoid DB quota issues during build
 /*

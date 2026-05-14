@@ -8,8 +8,8 @@ export const metadata: Metadata = {
   description: 'Browse all posts organized by date',
 }
 
-// Temporarily disable static generation to avoid DB quota issues during build
-export const dynamic = 'force-dynamic'
+// ISR: hourly revalidation. Restores bfcache vs. force-dynamic.
+export const revalidate = 3600
 
 export default async function ArchivePage() {
   const posts = await prisma.post.findMany({

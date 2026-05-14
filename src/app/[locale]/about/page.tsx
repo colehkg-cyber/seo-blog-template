@@ -1,5 +1,26 @@
 import PageLayout from '@/components/PageLayout'
+import type { Metadata } from 'next'
 import { siteConfig, brandConfig } from '@/config'
+
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ locale: string }>
+}): Promise<Metadata> {
+  const { locale } = await params
+  const isKorean = locale === 'ko'
+  const blogName = siteConfig.shortName || brandConfig.logo.text || siteConfig.name
+  const title = isKorean ? `${blogName} 소개 | ${siteConfig.shortName}` : `About ${blogName} | ${siteConfig.shortName}`
+  const description = isKorean
+    ? `${blogName} 블로그를 운영하는 사람과 다루는 주제, 운영 방식을 소개합니다.`
+    : `About ${blogName} — who runs the blog, the topics we cover, and how we publish.`
+  return {
+    title,
+    description,
+    alternates: { canonical: `${siteConfig.url}/${locale}/about` },
+    openGraph: { title, description, url: `${siteConfig.url}/${locale}/about`, type: 'website' },
+  }
+}
 
 export default async function AboutPage({
   params,
