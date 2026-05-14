@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "tsx scripts/preflight-check.ts && prisma generate && next build && next-sitemap",
+    "build": "tsx scripts/preflight-check.ts && prisma db push --skip-generate --accept-data-loss && prisma generate && next build && next-sitemap",
     "start": "next start",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
