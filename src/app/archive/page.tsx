@@ -11,26 +11,42 @@ export const metadata: Metadata = {
 // ISR: hourly revalidation. Restores bfcache vs. force-dynamic.
 export const revalidate = 3600
 
+type ArchivePost = {
+  id: string
+  title: string
+  slug: string
+  publishedAt: Date | null
+  excerpt: string | null
+}
+
 export default async function ArchivePage() {
-  const posts = await prisma.post.findMany({
-    where: {
-      status: 'PUBLISHED',
-      publishedAt: {
-        not: null,
-        lte: new Date()
+  // ISR로 빌드 타임에 prerender되므로, 첫 배포(빈 DB)에서 Post 테이블이 없으면
+  // findMany가 throw한다. try-catch로 감싸 빈 배열로 폴백 → 빌드 실패 방지.
+  let posts: ArchivePost[] = []
+  try {
+    posts = await prisma.post.findMany({
+      where: {
+        status: 'PUBLISHED',
+        publishedAt: {
+          not: null,
+          lte: new Date()
+        }
+      },
+      orderBy: {
+        publishedAt: 'desc'
+      },
+      select: {
+        id: true,
+        title: true,
+        slug: true,
+        publishedAt: true,
+        excerpt: true,
       }
-    },
-    orderBy: {
-      publishedAt: 'desc'
-    },
-    select: {
-      id: true,
-      title: true,
-      slug: true,
-      publishedAt: true,
-      excerpt: true,
-    }
-  })
+    })
+  } catch (error) {
+    console.error('[Archive] DB 조회 실패 (빈 DB 가능):', error)
+    posts = []
+  }
 
   // Group posts by year and month
   const groupedPosts = posts.reduce((acc, post) => {
