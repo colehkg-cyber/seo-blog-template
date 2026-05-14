@@ -30,6 +30,10 @@ model Post {
   threadsPostId     String?
   originalLanguage  String                      @default("ko")
   globalRank        Int?
+  isCornerstone     Boolean                     @default(false)
+  cornerstoneId     String?
+  cornerstone       Post?                       @relation("CornerstoneSpokes", fields: [cornerstoneId], references: [id], onDelete: SetNull)
+  spokes            Post[]                      @relation("CornerstoneSpokes")
   comments          Comment[]
   translations      PostTranslation[]
   affiliateProducts PostAffiliateProduct[]
@@ -39,6 +43,8 @@ model Post {
   @@index([status, scheduledAt])
   @@index([globalRank])
   @@index([threadsPostId])
+  @@index([isCornerstone])
+  @@index([cornerstoneId])
 }
 
 model Admin {

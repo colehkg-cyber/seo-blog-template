@@ -195,5 +195,91 @@ ${coupangEmbed ? `- 본문 중간에 아래 배너 HTML을 그대로 한 번 포
 `
 }
 
+/**
+ * 코너스톤(Cornerstone) 가이드 생성 프롬프트
+ *
+ * 5개 source 글을 종합해서 5,000~8,000자 종합 가이드 작성.
+ * 각 H2 섹션 마지막에 출처 글 링크 자동 삽입 → 양방향 인링크 SEO.
+ */
+export interface CornerstoneSourcePost {
+  title: string
+  slug: string
+  excerpt?: string | null
+  content: string
+}
+
+export function buildCornerstonePrompt(
+  sourcePosts: CornerstoneSourcePost[],
+  mainKeyword: string,
+  targetTitle?: string
+): string {
+  const MAX_CONTENT_PER_POST = 2000 // 글당 최대 2000자만 컨텍스트로 사용
+
+  const sourceContext = sourcePosts
+    .map((post, idx) => {
+      const trimmed =
+        post.content.length > MAX_CONTENT_PER_POST
+          ? post.content.substring(0, MAX_CONTENT_PER_POST) + '\n...(이하 생략)'
+          : post.content
+      return `[원본 ${idx + 1}] "${post.title}" (/posts/${post.slug})\n요약: ${
+        post.excerpt || '(없음)'
+      }\n본문:\n${trimmed}`
+    })
+    .join('\n\n---\n\n')
+
+  return `다음 5개의 기존 블로그 글을 종합해서 한 편의 **코너스톤(Cornerstone) 가이드**를 작성해주세요.
+
+**메인 키워드:** ${mainKeyword}
+${targetTitle ? `**목표 제목 후보:** ${targetTitle}` : ''}
+
+**원본 글 (Source Posts):**
+${sourceContext}
+
+**코너스톤 작성 규칙 (필수):**
+1. **분량**: 5,000~8,000자 (긴 종합 가이드)
+2. **H2 섹션 수**: 8~12개
+   - 인트로 1개 (전체 구조 안내)
+   - 본문 H2 6~10개 (각 원본 글의 핵심을 1~2개 H2로 풀어쓰기 + 종합 H2 추가)
+   - 결론 1개 (실행 체크리스트)
+3. **각 H2 섹션 마지막에 출처 링크 필수 삽입:**
+   형식: \`👉 더 자세히: [원본 글 제목](/posts/원본-slug)\`
+   해당 H2가 다룬 주제와 가장 관련 있는 원본 글을 가리킴
+4. **인트로**: "이 글은 누구를 위한 것인지" + "전체 목차 미리보기" 포함
+5. **결론**: 행동 가능한 체크리스트 5~7항목 (✅ 형식)
+6. **paraphrase 필수**: 원본 글의 표현을 그대로 복사하지 말고 재구성
+7. **키워드 자연 분포**: 메인 키워드 8~15회, LSI 변형 키워드 함께 사용
+8. **마크다운 ## (H2), ### (H3) 사용**. "H2:", "H3:" 같은 접두사 절대 금지
+
+**SEO 메타데이터:**
+- title: 60자 이내, "${mainKeyword} 완벽 가이드" 또는 "${mainKeyword} 총정리" 패턴
+- slug: 영문 케밥 케이스, 짧고 의미있게 (예: "remote-work-complete-guide")
+- seoDescription: 150~160자, 메인 키워드 포함, 종합 가이드임을 명시
+
+**반드시 JSON 형식으로 응답:**
+{"title":"SEO 제목 (60자 이내)","slug":"url-slug","excerpt":"3-4문장 요약 (이 가이드가 다루는 범위)","content":"마크다운 본문 (5000~8000자)","tags":["${mainKeyword}","코너스톤","완벽가이드"],"seoTitle":"SEO 제목","seoDescription":"메타 설명 (150~160자)"}`
+}
+
+/**
+ * Source 글 본문 끝에 자동 삽입할 코너스톤 링크 박스
+ * HTML 주석 delimiter 로 감싸서 추후 자동 갱신·제거 가능.
+ */
+export const CORNERSTONE_BOX_START = '<!-- CORNERSTONE_BOX_START -->'
+export const CORNERSTONE_BOX_END = '<!-- CORNERSTONE_BOX_END -->'
+
+export function buildCornerstoneBox(cornerstoneTitle: string, cornerstoneSlug: string): string {
+  return `\n\n${CORNERSTONE_BOX_START}\n---\n\n## 📚 이 주제의 종합 가이드\n\n[**${cornerstoneTitle}**](/posts/${cornerstoneSlug}) — 더 자세한 내용을 한 편에 모았습니다.\n${CORNERSTONE_BOX_END}\n`
+}
+
+/**
+ * 기존 본문에서 코너스톤 박스를 제거 (재할당·삭제 시 사용)
+ */
+export function stripCornerstoneBox(content: string): string {
+  const pattern = new RegExp(
+    `\\n*${CORNERSTONE_BOX_START}[\\s\\S]*?${CORNERSTONE_BOX_END}\\n*`,
+    'g'
+  )
+  return content.replace(pattern, '\n')
+}
+
 // 하위 호환성을 위한 re-export
 export const MASTER_SYSTEM_PROMPT = FALLBACK_SYSTEM_PROMPT
