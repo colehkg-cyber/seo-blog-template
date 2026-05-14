@@ -16,6 +16,7 @@ import { siteConfig, brandConfig, navigationConfig, featuresConfig } from '@/con
 import { shouldUseNextImage } from '@/lib/image-utils'
 import { tagsToArray } from '@/lib/utils/tags'
 import { unwrapContent } from '@/lib/utils/content'
+import { getOgImageUrl } from '@/lib/unsplash'
 
 interface PostPageProps {
   params: Promise<{ slug: string; locale: string }>
@@ -114,8 +115,16 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
     contentFallback ||
     siteConfig.description[locale === 'en' ? 'en' : 'ko']
 
-  const ogImageUrl = displayCoverImage ||
-    `${process.env.NEXT_PUBLIC_SITE_URL}/api/og?title=${encodeURIComponent(displayTitle)}&author=${encodeURIComponent(post.author || siteConfig.author.name)}&date=${encodeURIComponent(new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}&readTime=${encodeURIComponent(formatReadingTime(readingTime))}&tags=${encodeURIComponent(tagsToArray(post.tags).join(','))}`
+  // OG 이미지 결정 — 3단계 fallback
+  // 1순위: 글 cover image (Unsplash면 1200x630으로 강제 리사이징)
+  // 2순위: 동적 /api/og 라우트 (제목·작성자·날짜 텍스트 카드)
+  // 3순위: brandConfig.ogImage (사이트 기본 이미지, /og-image.png)
+  const siteBase = process.env.NEXT_PUBLIC_SITE_URL || siteConfig.url
+  const dynamicOgUrl = `${siteBase}/api/og?title=${encodeURIComponent(displayTitle)}&author=${encodeURIComponent(post.author || siteConfig.author.name)}&date=${encodeURIComponent(new Date(post.publishedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }))}&readTime=${encodeURIComponent(formatReadingTime(readingTime))}&tags=${encodeURIComponent(tagsToArray(post.tags).join(','))}`
+  const defaultOgUrl = `${siteBase}${brandConfig.ogImage}`
+  const ogImageUrl = displayCoverImage
+    ? getOgImageUrl(displayCoverImage, dynamicOgUrl)
+    : (dynamicOgUrl || defaultOgUrl)
 
   return {
     title: post.seoTitle || displayTitle,
@@ -146,9 +155,16 @@ export async function generateMetadata({ params }: PostPageProps): Promise<Metad
   }
   } catch (error) {
     console.error('Error generating metadata:', error)
+    const siteBase = process.env.NEXT_PUBLIC_SITE_URL || siteConfig.url
     return {
       title: `Post - ${siteConfig.shortName}`,
-      description: 'Blog post content unavailable'
+      description: 'Blog post content unavailable',
+      openGraph: {
+        title: `Post - ${siteConfig.shortName}`,
+        description: 'Blog post content unavailable',
+        type: 'article',
+        images: [{ url: `${siteBase}${brandConfig.ogImage}` }],
+      },
     }
   }
 }

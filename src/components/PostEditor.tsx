@@ -400,31 +400,89 @@ export default function PostEditor({ initialData, onSubmit, isEdit = false }: Po
         </div>
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-          <div>
-            <label htmlFor="seoTitle" className="block text-sm font-medium text-gray-700">
-              SEO 제목
-            </label>
-            <input
-              type="text"
-              id="seoTitle"
-              value={formData.seoTitle}
-              onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
+          {/* SEO 제목: 50~60자 권장 (구글 검색 결과 잘림 방지) */}
+          {(() => {
+            const titleLen = formData.seoTitle.length
+            const titleStatus =
+              titleLen === 0 ? 'gray' :
+              titleLen < 50 ? 'yellow' :
+              titleLen <= 60 ? 'green' :
+              titleLen <= 70 ? 'yellow' : 'red'
+            const titleColorClass = {
+              gray: 'text-gray-400',
+              yellow: 'text-yellow-600',
+              green: 'text-green-600',
+              red: 'text-red-600',
+            }[titleStatus]
+            const titleHint = {
+              gray: '권장 50~60자',
+              yellow: titleLen < 50 ? `${50 - titleLen}자 더` : `${titleLen - 60}자 초과 (60자 권장)`,
+              green: '최적',
+              red: '검색 결과에서 잘림',
+            }[titleStatus]
+            return (
+              <div>
+                <div className="flex items-baseline justify-between">
+                  <label htmlFor="seoTitle" className="block text-sm font-medium text-gray-700">
+                    SEO 제목
+                  </label>
+                  <span className={`text-xs ${titleColorClass}`}>
+                    {titleLen}자 · {titleHint}
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  id="seoTitle"
+                  value={formData.seoTitle}
+                  onChange={(e) => setFormData({ ...formData, seoTitle: e.target.value })}
+                  maxLength={70}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                />
+              </div>
+            )
+          })()}
 
-          <div>
-            <label htmlFor="seoDescription" className="block text-sm font-medium text-gray-700">
-              SEO 설명
-            </label>
-            <input
-              type="text"
-              id="seoDescription"
-              value={formData.seoDescription}
-              onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
-              className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
-            />
-          </div>
+          {/* SEO 설명: 150~160자 권장 (모바일·데스크탑 모두 안전한 범위) */}
+          {(() => {
+            const descLen = formData.seoDescription.length
+            const descStatus =
+              descLen === 0 ? 'gray' :
+              descLen < 150 ? 'yellow' :
+              descLen <= 160 ? 'green' :
+              descLen <= 200 ? 'yellow' : 'red'
+            const descColorClass = {
+              gray: 'text-gray-400',
+              yellow: 'text-yellow-600',
+              green: 'text-green-600',
+              red: 'text-red-600',
+            }[descStatus]
+            const descHint = {
+              gray: '권장 150~160자',
+              yellow: descLen < 150 ? `${150 - descLen}자 더` : `${descLen - 160}자 초과 (160자 권장)`,
+              green: '최적',
+              red: '검색 결과에서 잘림',
+            }[descStatus]
+            return (
+              <div>
+                <div className="flex items-baseline justify-between">
+                  <label htmlFor="seoDescription" className="block text-sm font-medium text-gray-700">
+                    SEO 설명
+                  </label>
+                  <span className={`text-xs ${descColorClass}`}>
+                    {descLen}자 · {descHint}
+                  </span>
+                </div>
+                <input
+                  type="text"
+                  id="seoDescription"
+                  value={formData.seoDescription}
+                  onChange={(e) => setFormData({ ...formData, seoDescription: e.target.value })}
+                  maxLength={200}
+                  className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
+                />
+              </div>
+            )
+          })()}
         </div>
       </div>
 

@@ -166,6 +166,31 @@ export function getOptimizedImageUrl(
 }
 
 /**
+ * OG 이미지 전용 URL 생성 — 1200×630 강제 (페이스북·카톡·트위터 표준)
+ *
+ * Unsplash URL이면 1200×630으로 crop, 아니면 원본 URL 반환.
+ * 일반 본문 썸네일은 1080px 그대로 두고, OG meta 태그에만 이 함수 사용.
+ */
+export function getOgImageUrl(url: string | null | undefined, fallback: string): string {
+  if (!url) return fallback
+  if (!url.includes('images.unsplash.com')) return url
+  try {
+    const parsed = new URL(url)
+    parsed.searchParams.set('w', '1200')
+    parsed.searchParams.set('h', '630')
+    parsed.searchParams.set('fit', 'crop')
+    parsed.searchParams.set('crop', 'entropy')
+    parsed.searchParams.set('q', '80')
+    parsed.searchParams.set('auto', 'format')
+    // fm은 auto와 충돌하므로 제거
+    parsed.searchParams.delete('fm')
+    return parsed.toString()
+  } catch {
+    return url
+  }
+}
+
+/**
  * 기존 Unsplash URL을 최적화된 형태로 변환
  * fm=jpg → auto=format (AVIF/WebP 자동 전환)
  * w=1200 → w=1080 (적정 크기)
